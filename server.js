@@ -20,7 +20,18 @@ app.use(
   })
 );
 app.use("/uploads", express.static("uploads"));
+app.use(
+  session({
+    key: "session_cookie_name",
+    secret: process.env.SESSION_SECRET || "supersecret",
+    store: sessionStore,
+    resave: false,
+    saveUninitialized: false,
+    cookie: { secure: false }, // set true if using https
+  })
+);
 
+const sessionStore = new MySQLStore(dbOptions);
 // Setup MySQL Connection
 const db = mysql.createConnection({
    host: process.env.DB_HOST,
