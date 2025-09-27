@@ -9,6 +9,7 @@ const nodemailer = require("nodemailer");
 const crypto = require("crypto");
 const app = express();
 const session = require("express-session");
+require("dotenv").config();
 
 
 app.use(express.json());
