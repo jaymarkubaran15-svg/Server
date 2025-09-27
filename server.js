@@ -22,10 +22,10 @@ app.use("/uploads", express.static("uploads"));
 
 // Setup MySQL Connection
 const db = mysql.createConnection({
-  host: "localhost",
-  user: "root",
-  password: "",
-  database: "memotrace",
+  host: "sql12.freesqldatabase.com",
+  user: "sql12800297",
+  password: "TDUhZUIG6R",
+  database: "	sql12800297",
     charset: "utf8mb4"
 });
 
