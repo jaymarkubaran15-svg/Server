@@ -25,7 +25,7 @@ const db = mysql.createConnection({
   host: "sql12.freesqldatabase.com",
   user: "sql12800297",
   password: "TDUhZUIG6R",
-  database: "	sql12800297",
+  database: "sql12800297",
     charset: "utf8mb4"
 });
 
