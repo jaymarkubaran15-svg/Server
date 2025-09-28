@@ -244,7 +244,7 @@ function sendVerificationCode(email, code, res) {
   });
 
   const mailOption = {
-    from: "memotrace@gmail.com",
+    from: "jaymarkobaran18@gmail.com",
     to: email,
     subject: 'Confirm your email change',
     text: `Your verification code is: ${code}`
@@ -386,7 +386,7 @@ function sendFailedAttemptAlert(email) {
   });
 
   const mail = {
-    from: "memotrace@gmail.com",
+    from:"jaymarkobaran18@gmail.com",
     to: email,
     subject: "Security Alert: Multiple Failed Password Attempts",
     text: `There have been 3 unsuccessful attempts to change your password on your MEMOTRACE account. If this wasn't you, please secure your account immediately.`,
@@ -411,7 +411,7 @@ function sendPasswordResetCode(email, code, res) {
   });
 
   const mailOptions = {
-    from: "memotrace@gmail.com",
+    from: "jaymarkobaran18@gmail.com",
     to: email,
     subject: "Password Reset Verification Code",
     text: `You have requested to reset your password.\n\nYour verification code is: ${code}\n\nIf you did not request this, please ignore this email.`,
@@ -661,7 +661,7 @@ function sendVerificationEmail(email, token) {
   });
 
   const mail = {
-      from: "memotrace@gmail.com",
+      from: "jaymarkobaran18@gmail.com",
       to: email,
       subject: "Verify Your Email",
       text: `Click the link to verify your Memotrace email account: https://server1-95qr.onrender.com/api/verify-email?token=${token}`,
