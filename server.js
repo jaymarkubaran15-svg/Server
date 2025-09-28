@@ -9,7 +9,8 @@ const nodemailer = require("nodemailer");
 const crypto = require("crypto");
 const app = express();
 const session = require("express-session");
-const MySQLStore = require("express-mysql-session")(session);
+const MySQLStore = require("express-mysql-session");
+const PORT = process.env.PORT || 5000;
 require("dotenv").config();
 
 
@@ -40,19 +41,17 @@ db.connect((err) => {
 });
 
 // Initialize session store
-const sessionStore = new MySQLStore(dbOptions);
+const sessionStore = new MySQLStore({}, pool);
 
 // Middleware
-app.use(
-  session({
-    key: "session_cookie_name",
-    secret: process.env.SESSION_SECRET || "supersecret",
-    store: sessionStore, // ✅ properly initialized
-    resave: false,
-    saveUninitialized: false,
-    cookie: { secure: false }, // true if using HTTPS
-  })
-);
+app.use(session({
+  key: "session_cookie_name",
+  secret: process.env.SESSION_SECRET,
+  store: sessionStore,
+  resave: false,
+  saveUninitialized: false,
+  cookie: { maxAge: 1000 * 60 * 60 } // 1 hour
+}));
 
 app.get("/", (req, res) => {
   res.send("✅ Backend is running on Render!");
