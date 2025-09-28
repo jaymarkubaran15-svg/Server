@@ -20,18 +20,7 @@ app.use(
   })
 );
 app.use("/uploads", express.static("uploads"));
-app.use(
-  session({
-    key: "session_cookie_name",
-    secret: process.env.SESSION_SECRET || "supersecret",
-    store: sessionStore, // ✅ now properly initialized
-    resave: false,
-    saveUninitialized: false,
-    cookie: { secure: false }, // true if using HTTPS
-  })
-);
 
-const sessionStore = new MySQLStore(dbOptions);
 // Setup MySQL Connection
 const dbOptions = {
   host: process.env.DB_HOST,
@@ -46,9 +35,26 @@ db.connect((err) => {
   if (err) console.error("MySQL connection failed:", err);
   else console.log("Connected to MySQL");
 });
+
+// Initialize session store
+const sessionStore = new MySQLStore(dbOptions);
+
+// Middleware
+app.use(
+  session({
+    key: "session_cookie_name",
+    secret: process.env.SESSION_SECRET || "supersecret",
+    store: sessionStore, // ✅ properly initialized
+    resave: false,
+    saveUninitialized: false,
+    cookie: { secure: false }, // true if using HTTPS
+  })
+);
+
 app.get("/", (req, res) => {
   res.send("✅ Backend is running on Render!");
 });
+
 
 
 //CHECKING FOR ERROR IN EVENT POSTING
