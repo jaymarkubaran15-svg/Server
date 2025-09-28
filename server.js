@@ -15,12 +15,12 @@ require("dotenv").config();
 
 
 app.use(express.json());
-app.use(
-  cors({
-    origin: "https://client-n73d.onrender.com", // Allow requests only from your frontend
-    credentials: true, 
-  })
-);
+app.use(cors({
+  origin: "https://client-n73d.onrender.com", // your client URL
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  credentials: true // allow cookies/sessions
+}));
+
 app.use("/uploads", express.static("uploads"));
 
 // Setup MySQL Connection
