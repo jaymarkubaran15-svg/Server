@@ -44,7 +44,8 @@ db.connect((err) => {
 });
 
 // Initialize session store
-const sessionStore = new MySQLStore(dbOptions);
+const sessionStore = new MySQLStore({}, db);
+
 
 // Middleware
 app.use(session({
@@ -60,6 +61,12 @@ app.get("/", (req, res) => {
   res.send("✅ Backend is running on Render!");
 });
 
+app.get("/test-db", (req, res) => {
+  db.query("SELECT 1 + 1 AS result", (err, results) => {
+    if (err) return res.status(500).send("DB Test Failed: " + err);
+    res.send("DB Test Success: " + JSON.stringify(results));
+  });
+});
 
 
 //CHECKING FOR ERROR IN EVENT POSTING
