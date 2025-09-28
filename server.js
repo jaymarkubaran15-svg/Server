@@ -653,18 +653,26 @@ app.get("/api/verify-email", (req, res) => {
 
 function sendVerificationEmail(email, token) {
   const transporter = nodemailer.createTransport({
-      service: "gmail",
+      host: "smtp-relay.brevo.com",
       auth: {
-          user: "jaymarkobaran18@gmail.com",
-          pass: "dzwvjlwmkjmmkqed",
+          user: "jaymarkubaran15@gmail.com",
+          pass:process.env.SENDINBLUE_SMTP_KEY,
       },
   });
 
   const mail = {
-      from: "jaymarkobaran18@gmail.com",
-      to: email,
-      subject: "Verify Your Email",
-      text: `Click the link to verify your Memotrace email account: https://server1-95qr.onrender.com/api/verify-email?token=${token}`,
+    from: '"Memotrace" <jaymarkubaran15@gmail.com>',
+    to: email,
+    subject: "Verify Your Email",
+    text: `Click the link to verify your Memotrace email account: https://server1-95qr.onrender.com/api/verify-email?token=${token}`,
+    html: `
+      <h2>Welcome to Memotrace 🎉</h2>
+      <p>Please verify your email by clicking the button below:</p>
+      <a href="https://server1-95qr.onrender.com/api/verify-email?token=${token}" 
+         style="display:inline-block;padding:10px 20px;background:#4CAF50;color:#fff;text-decoration:none;border-radius:5px;">
+         Verify Email
+      </a>
+    `,
   };
 
   transporter.sendMail(mail, (error, info) => {
@@ -675,8 +683,6 @@ function sendVerificationEmail(email, token) {
     }
 });
 } 
-
-
 
 
 app.use(
