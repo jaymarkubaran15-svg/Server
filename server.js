@@ -15,7 +15,7 @@ require("dotenv").config();
 app.use(express.json());
 app.use(
   cors({
-    origin: "http://localhost:3000", // Allow requests only from your frontend
+    origin: "http://server-jodp.onrender.com", // Allow requests only from your frontend
     credentials: true, 
   })
 );
@@ -626,7 +626,7 @@ app.get("/api/verify-email", (req, res) => {
     });
 
     // ✅ Redirect to login page after verification
-    res.redirect("http://localhost:3000/login"); 
+    res.redirect("http://server-jodp.onrender.com/login"); 
     // 🔹 Change to your frontend login URL when deployed
   });
 });
