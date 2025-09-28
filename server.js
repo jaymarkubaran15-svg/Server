@@ -655,7 +655,7 @@ function sendVerificationEmail(email, token) {
   const transporter = nodemailer.createTransport({
       host: "smtp-relay.brevo.com",
       auth: {
-          user: "9809b0002@smtp-brevo.com",
+          user: "jaymarkubaran15@gmail.com",
           pass:process.env.SENDINBLUE_SMTP_KEY,
       },
   });
