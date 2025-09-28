@@ -664,7 +664,7 @@ function sendVerificationEmail(email, token) {
       from: "memotrace@gmail.com",
       to: email,
       subject: "Verify Your Email",
-      text: `Click the link to verify your Memotrace email account: https://client-n73d.onrender.com/api/verify-email?token=${token}`,
+      text: `Click the link to verify your Memotrace email account: https://server1-95qr.onrender.com/api/verify-email?token=${token}`,
   };
 
   transporter.sendMail(mail, (error, info) => {
