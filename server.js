@@ -57,9 +57,6 @@ app.use(session({
   cookie: { maxAge: 1000 * 60 * 60 } // 1 hour
 }));
 
-app.get("/", (req, res) => {
-  res.send("✅ Backend is running on Render!");
-});
 
 app.get("/test-db", (req, res) => {
   db.query("SELECT 1 + 1 AS result", (err, results) => {
