@@ -24,23 +24,23 @@ app.use(
   session({
     key: "session_cookie_name",
     secret: process.env.SESSION_SECRET || "supersecret",
-    store: sessionStore,
+    store: sessionStore, // ✅ now properly initialized
     resave: false,
     saveUninitialized: false,
-    cookie: { secure: false }, // set true if using https
+    cookie: { secure: false }, // true if using HTTPS
   })
 );
 
 const sessionStore = new MySQLStore(dbOptions);
 // Setup MySQL Connection
-const db = mysql.createConnection({
-   host: process.env.DB_HOST,
+const dbOptions = {
+  host: process.env.DB_HOST,
   user: process.env.DB_USER,
   password: process.env.DB_PASSWORD,
   database: process.env.DB_NAME,
   port: process.env.DB_PORT,
-    charset: "utf8mb4"
-});
+  charset: "utf8mb4",
+};
 
 db.connect((err) => {
   if (err) console.error("MySQL connection failed:", err);
