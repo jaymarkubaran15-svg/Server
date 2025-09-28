@@ -9,7 +9,7 @@ const nodemailer = require("nodemailer");
 const crypto = require("crypto");
 const app = express();
 const session = require("express-session");
-const MySQLStore = require("express-mysql-session");
+const MySQLStore = require("express-mysql-session")(session);
 const PORT = process.env.PORT || 5000;
 require("dotenv").config();
 
@@ -41,7 +41,7 @@ db.connect((err) => {
 });
 
 // Initialize session store
-const sessionStore = new MySQLStore({}, pool);
+const sessionStore = new MySQLStore(dbOptions);
 
 // Middleware
 app.use(session({
