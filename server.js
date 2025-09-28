@@ -10,7 +10,7 @@ const crypto = require("crypto");
 const app = express();
 const session = require("express-session");
 const MySQLStore = require("express-mysql-session")(session);
-const PORT = process.env.PORT || 5000;
+
 require("dotenv").config();
 
 
@@ -657,7 +657,7 @@ function sendVerificationEmail(email, token) {
       from: "memotrace@gmail.com",
       to: email,
       subject: "Verify Your Email",
-      text: `Click the link to verify your Memotrace email account: http://localhost:5000/api/verify-email?token=${token}`,
+      text: `Click the link to verify your Memotrace email account: https://client-n73d.onrender.com/api/verify-email?token=${token}`,
   };
 
   transporter.sendMail(mail, (error, info) => {
@@ -1800,4 +1800,5 @@ app.get("/api/feedback-responses", (req, res) => {
 
 
 // Start Server
-app.listen(5000, () => console.log("Server running on port 5000"));
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => console.log("Server running on port 5000"));
