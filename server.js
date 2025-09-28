@@ -31,6 +31,8 @@ const dbOptions = {
   charset: "utf8mb4",
 };
 
+// Connect to MySQL
+const db = mysql.createConnection(dbOptions);
 db.connect((err) => {
   if (err) console.error("MySQL connection failed:", err);
   else console.log("Connected to MySQL");
