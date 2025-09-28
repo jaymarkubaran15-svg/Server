@@ -21,6 +21,9 @@ app.use(cors({
   credentials: true // allow cookies/sessions
 }));
 
+// Handle preflight requests for all routes
+app.options("*", cors());
+
 app.use("/uploads", express.static("uploads"));
 
 // Setup MySQL Connection
