@@ -9,6 +9,7 @@ const nodemailer = require("nodemailer");
 const crypto = require("crypto");
 const app = express();
 const session = require("express-session");
+const MySQLStore = require("express-mysql-session")(session);
 require("dotenv").config();
 
 
