@@ -17,7 +17,7 @@ require("dotenv").config();
 app.use(express.json());
 app.use(
   cors({
-    origin: "http://server-jodp.onrender.com", // Allow requests only from your frontend
+    origin: "https://client-n73d.onrender.com", // Allow requests only from your frontend
     credentials: true, 
   })
 );
