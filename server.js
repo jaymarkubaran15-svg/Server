@@ -650,34 +650,40 @@ app.get("/api/verify-email", (req, res) => {
 });
 
 
-const SibApiV3Sdk = require("sib-api-v3-sdk");
+function sendVerificationEmail(email, token) {
+  const transporter = nodemailer.createTransport({
+      host: "smtp-relay.brevo.com",
+        port: 587, // or 465 if 587 is blocked
+        secure: false, // true if using port 465
+      auth: {
+          user: "apikey",
+          pass:process.env.SENDINBLUE_SMTP_KEY,
+      },
+  });
 
-async function sendVerificationEmail(email, token) {
-  const defaultClient = SibApiV3Sdk.ApiClient.instance;
-  const apiKey = defaultClient.authentications["api-key"];
-  apiKey.apiKey = process.env.BREVO_API_KEY; // generate in Brevo dashboard (not SMTP key)
+  const mail = {
+    from: '"Memotrace" <jaymarkubaran15@gmail.com>', // use your verified domain/email
+    to: email,
+    subject: "Verify Your Email",
+    text: `Click the link to verify your Memotrace email account: https://server1-95qr.onrender.com/api/verify-email?token=${token}`,
+    html: `
+      <h2>Welcome to Memotrace 🎉</h2>
+      <p>Please verify your email by clicking the button below:</p>
+      <a href="https://server1-95qr.onrender.com/api/verify-email?token=${token}" 
+         style="display:inline-block;padding:10px 20px;background:#4CAF50;color:#fff;text-decoration:none;border-radius:5px;">
+         Verify Email
+      </a>
+    `,
+  };
 
-  const tranEmailApi = new SibApiV3Sdk.TransactionalEmailsApi();
-
-  try {
-    await tranEmailApi.sendTransacEmail({
-      sender: { email: "no-reply@yourdomain.com", name: "Memotrace" },
-      to: [{ email }],
-      subject: "Verify Your Email",
-      htmlContent: `
-        <h2>Welcome to Memotrace 🎉</h2>
-        <p>Please verify your email by clicking the button below:</p>
-        <a href="https://server1-95qr.onrender.com/api/verify-email?token=${token}" 
-           style="display:inline-block;padding:10px 20px;background:#4CAF50;color:#fff;text-decoration:none;border-radius:5px;">
-           Verify Email
-        </a>
-      `,
-    });
-    console.log("✅ Email sent successfully");
-  } catch (error) {
-    console.error("❌ Email sending error:", error);
-  }
-}
+  transporter.sendMail(mail, (error, info) => {
+    if (error) {
+        console.error("Email sending error:", error);
+    } else {
+        console.log("Email sent: ", info.response);
+    }
+});
+} 
 
 
 
