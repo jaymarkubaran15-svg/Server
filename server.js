@@ -16,7 +16,7 @@ require("dotenv").config();
 
 app.use(express.json());
 app.use(cors({
-  origin: "https://client-n73d.onrender.com", // your client URL
+  origin: "https://stii-memotrace.onrender.com", // your client URL
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   credentials: true // allow cookies/sessions
 }));
@@ -644,7 +644,7 @@ app.get("/api/verify-email", (req, res) => {
     });
 
     // ✅ Redirect to login page after verification
-    res.redirect("https://client-n73d.onrender.com/login"); 
+    res.redirect("https://stii-memotrace.onrender.com"); 
     // 🔹 Change to your frontend login URL when deployed
   });
 });
