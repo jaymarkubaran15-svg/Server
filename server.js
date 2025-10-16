@@ -797,8 +797,8 @@ function sendVerificationEmail(email, token) {
   const transporter = nodemailer.createTransport({
       service: "gmail",
       auth: {
-          user: "jaymarkobaran18@gmail.com",
-          pass: "dzwvjlwmkjmmkqed",
+          user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASS,  
       },
   });
 
