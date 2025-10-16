@@ -1,6 +1,6 @@
 const express = require("express");
 const multer = require("multer");
-const mysql = require("mysql2/promise");
+const mysql = require("mysql");
 const path = require("path");
 const fs = require("fs");
 const cors = require("cors");
