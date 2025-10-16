@@ -20,7 +20,8 @@ app.use(express.urlencoded({ limit: "50mb", extended: true }));
 app.use(express.json());
 app.use(
   cors({
-    origin: "https://stii-memotrace.onrender.com", // Allow requests only from your frontend
+    origin: "https://memotrace-stii.onrender.com", // Allow requests only from your frontend
+     methods: ['GET','POST','PUT','DELETE','OPTIONS'],
     credentials: true, 
   })
 );
@@ -42,7 +43,7 @@ db.connect((err) => {
 });
 
 app.get("/", (req, res) => {
-  res.send("is running! Use /api/alumni to fetch data.");
+  res.send("backend is running! Use /api/alumni to fetch data.");
 });
 
 
