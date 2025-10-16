@@ -32,7 +32,7 @@ const db = mysql.createConnection({
   user: process.env.DB_USER,
   password: process.env.DB_PASS,
   database: process.env.DB_NAME,
-  ssl: { ca: process.env.DB_CA },
+  ssl: { ca: process.env.DB_SSL_CA },
 });
 
 db.connect((err) => {
