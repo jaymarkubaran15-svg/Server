@@ -42,7 +42,7 @@ db.connect((err) => {
 });
 
 app.get("/", (req, res) => {
-  res.send("Backend is running! Use /api/alumni to fetch data.");
+  res.send(" is running! Use /api/alumni to fetch data.");
 });
 
 
