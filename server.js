@@ -1,6 +1,6 @@
 const express = require("express");
 const multer = require("multer");
-const mysql = require("mysql");
+
 const path = require("path");
 const fs = require("fs");
 const cors = require("cors");
@@ -9,6 +9,16 @@ const nodemailer = require("nodemailer");
 const crypto = require("crypto");
 const app = express();
 const session = require("express-session");
+import mysql from "mysql2/promise"; // or require("mysql2/promise")
+
+const pool = mysql.createPool({
+  host: process.env.DB_HOST,
+  port: process.env.DB_PORT || 3306,
+  user: process.env.DB_USER,
+  password: process.env.DB_PASS,
+  database: process.env.DB_NAME,
+  ssl: { ca: process.env.DB_CA }, // full Aiven CA PEM
+});
 
 
 // Allow larger JSON and URL-encoded bodies (for base64 images)
@@ -24,21 +34,6 @@ app.use(
   })
 );
 app.use("/uploads", express.static("uploads"));
-
-// Setup MySQL Connection
-const db = mysql.createConnection({
-   host: process.env.DB_HOST,
-  port: process.env.DB_PORT,
-  user: process.env.DB_USER,
-  password: process.env.DB_PASS,
-  database: process.env.DB_NAME,
-  ssl: { ca: process.env.DB_CA },
-});
-
-db.connect((err) => {
-  if (err) console.error("MySQL connection failed:", err);
-  else console.log("Connected to MySQL");
-});
 
 app.get("/", (req, res) => {
   res.send("Backend is running! Use /api/alumni to fetch data.");
@@ -90,15 +85,14 @@ app.get("/events", (req, res) => {
 
 
 
-app.get("/api/users", (req, res) => {
-  const getAlumniQuery = "SELECT * FROM alumni WHERE role = 'alumni'";
-  db.query(getAlumniQuery, (err, results) => {
-      if (err) {
-          console.error("Error fetching alumni users:", err);
-          return res.status(500).json({ message: "Database error" });
-      }
-      res.json(results);
-  });
+app.get("/api/users", async (req, res) => {
+  try {
+    const [rows] = await pool.query("SELECT * FROM alumni WHERE role='alumni'");
+    res.json(rows);
+  } catch (err) {
+    console.error("Error fetching alumni users:", err.message);
+    res.status(500).json({ message: "Database error", error: err.message });
+  }
 });
 
 
