@@ -620,6 +620,7 @@ app.post("/api/reset-password", async (req, res) => {
 const bcrypt = require("bcryptjs");
 
 app.post("/api/register", async (req, res) => {
+   res.json({ message: 'CORS works!' });
   try {
     const {
       firstName,
