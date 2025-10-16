@@ -10,6 +10,7 @@ const crypto = require("crypto");
 const app = express();
 const session = require('express-session');
 const MySQLStore = require('express-mysql-session')(session);
+const mailgun = require("mailgun-js");
 
 
 // Allow larger JSON and URL-encoded bodies (for base64 images)
@@ -742,6 +743,7 @@ app.post("/api/register", async (req, res) => {
 
             // ✅ Send verification email
             sendVerificationEmail(email, verificationToken);
+            
             res.json({
               message: "Registration successful. Please verify your email.",
             });
@@ -793,31 +795,36 @@ app.get("/api/verify-email", (req, res) => {
 
 
 
+
 function sendVerificationEmail(email, token) {
-  const transporter = nodemailer.createTransport({
-      service: "gmail",
-      auth: {
-          user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASS,  
-      },
-  });
+  try {
+    const mg = mailgun({
+      apiKey: process.env.MAILGUN_API_KEY,
+      domain: process.env.MAILGUN_DOMAIN,
+    });
 
-  const mail = {
-      from:  `"MemoTrace" <${process.env.SMTP_USER}>`,
+    const data = {
+      from: `MemoTrace <${process.env.MAILGUN_FROM_EMAIL}>`,
       to: email,
-      subject: "Verify Your Email",
-      text: `Click the link to verify your Memotrace email account: https://stii-memotrace.onrender.com/api/verify-email?token=${token}`,
-  };
+      subject: "Verify Your MemoTrace Email",
+      text: `Click the link to verify your account: https://stii-memotrace.onrender.com/api/verify-email?token=${token}`,
+    };
 
-  transporter.sendMail(mail, (error, info) => {
-    if (error) {
-        console.error("Email sending error:", error);
-    } else {
-        console.log("Email sent: ", info.response);
-    }
-});
-} 
-
+    return new Promise((resolve, reject) => {
+      mg.messages().send(data, function (error, body) {
+        if (error) {
+          console.error("Mailgun error:", error);
+          return reject(error);
+        }
+        console.log("Email sent:", body);
+        resolve(true);
+      });
+    });
+  } catch (err) {
+    console.error("Send email error:", err);
+    return false;
+  }
+}
 
 
 
