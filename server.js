@@ -8,7 +8,8 @@ const xlsx = require("xlsx");
 const nodemailer = require("nodemailer");
 const crypto = require("crypto");
 const app = express();
-const session = require("express-session");
+const session = require('express-session');
+const MySQLStore = require('express-mysql-session')(session);
 
 
 // Allow larger JSON and URL-encoded bodies (for base64 images)
@@ -823,13 +824,15 @@ function sendVerificationEmail(email, token) {
 
 app.use(
   session({
-    secret: "memo_trace",
+    key: 'memotrace_session',
+    secret: process.env.SESSION_SECRET,
     resave: false,
     saveUninitialized: false,
     cookie: {
       secure: false, // Set to `true` if using HTTPS
       httpOnly: true,
-      sameSite: "lax"
+      sameSite: "lax",
+       maxAge: 1000 * 60 * 60 * 24 
     }
   })
 );
