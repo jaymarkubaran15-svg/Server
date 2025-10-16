@@ -2332,6 +2332,69 @@ app.get("/api/work/latest", (req, res) => {
   });
 });
 
+app.get("/api/alumni", (req, res) => {
+  const getAlumniQuery = `
+    SELECT *
+    FROM alumni
+    WHERE role = 'alumni'
+  `;
+
+  db.query(getAlumniQuery, (err, alumniResults) => {
+    if (err) {
+      console.error("Error fetching alumni:", err);
+      return res.status(500).json({ message: "Database error (alumni)" });
+    }
+
+    if (alumniResults.length === 0) {
+      return res.json([]);
+    }
+
+    // Get all alumni IDs to fetch work & education for all of them
+    const alumniIds = alumniResults.map(a => a.id);
+
+    // Queries for related data
+    const workQuery = `
+      SELECT *
+      FROM work_experiences
+      WHERE user_id IN (?)
+      ORDER BY start_date DESC
+    `;
+    const educationQuery = `
+      SELECT id, user_id, program_type AS programType, field_of_study AS fieldOfStudy,
+             institution_name AS institutionName, institution_location AS institutionLocation,
+             start_date AS startDate, end_date AS endDate, is_completed AS isCompleted
+      FROM education
+      WHERE user_id IN (?)
+      ORDER BY start_date DESC
+    `;
+
+    // Fetch work & education in parallel
+    db.query(workQuery, [alumniIds], (err, workResults) => {
+      if (err) {
+        console.error("Error fetching work:", err);
+        return res.status(500).json({ message: "Database error (work)" });
+      }
+
+      db.query(educationQuery, [alumniIds], (err, educationResults) => {
+        if (err) {
+          console.error("Error fetching education:", err);
+          return res.status(500).json({ message: "Database error (education)" });
+        }
+
+        // Combine all data by alumni
+        const combined = alumniResults.map(alumni => ({
+          ...alumni,
+          work: workResults.filter(w => w.user_id === alumni.id),
+          education: educationResults.filter(e => e.user_id === alumni.id)
+        }));
+
+        res.json(combined);
+      });
+    });
+  });
+});
+
+
 // Express.js example
 app.post("/api/mark-survey", async (req, res) => {
   try {
