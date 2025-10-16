@@ -639,64 +639,124 @@ app.post("/api/register", async (req, res) => {
       role,
     } = req.body;
 
-    if (!firstName || !lastName || !email || !password || !alumniCardNumber || !privacyPolicyAccepted) {
-      return res.status(400).json({ message: "All required fields must be filled" });
+    if (
+      !firstName ||
+      !lastName ||
+      !email ||
+      !password ||
+      !alumniCardNumber ||
+      !privacyPolicyAccepted
+    ) {
+      return res
+        .status(400)
+        .json({ message: "All required fields must be filled" });
     }
 
-    // Check if Alumni Card Number exists
-    const [alumniIDRows] = await db.execute("SELECT * FROM alumni_ids WHERE alumni_id = ?", [alumniCardNumber]);
-    if (alumniIDRows.length === 0) {
-      return res.status(400).json({ message: "Invalid Alumni Card Number" });
-    }
+    // ✅ Check if Alumni Card Number exists
+    const checkAlumniIDQuery = "SELECT * FROM alumni_ids WHERE alumni_id = ?";
+    db.query(checkAlumniIDQuery, [alumniCardNumber], async (err, result) => {
+      if (err) {
+        console.error("Database error:", err);
+        return res
+          .status(500)
+          .json({ message: "Make sure your information is correct" });
+      }
 
-    // Check for duplicates
-    const [duplicateRows] = await db.execute("SELECT * FROM alumni WHERE alumni_card_number = ?", [alumniCardNumber]);
-    if (duplicateRows.length > 0) {
-      return res.status(400).json({
-        message: "Alumni Card Number already registered. Please verify the form.",
+      if (result.length === 0) {
+        return res.status(400).json({ message: "Invalid Alumni Card Number" });
+      }
+
+      // ✅ Check if already registered
+      const checkDuplicateQuery =
+        "SELECT * FROM alumni WHERE alumni_card_number = ?";
+      db.query(checkDuplicateQuery, [alumniCardNumber], async (dupErr, dupResult) => {
+        if (dupErr) {
+          console.error("Database error:", dupErr);
+          return res
+            .status(500)
+            .json({ message: "Database error while checking duplicates" });
+        }
+
+        if (dupResult.length > 0) {
+          return res.status(400).json({
+            message:
+              "Invalid input. Please verify the form. Alumni Card Number not accepted.",
+          });
+        }
+
+        // ✅ Generate verification token
+        const verificationToken = crypto.randomBytes(32).toString("hex");
+
+        // ✅ Hash password
+        const hashedPassword = await bcrypt.hash(password, 10);
+
+        // ✅ Role assignment
+        const userRole = role && role === "admin" ? "admin" : "alumni";
+
+        // ✅ Insert user into DB
+        const insertQuery = `
+          INSERT INTO alumni (
+            first_name, middle_name, last_name, email, alumni_card_number,
+            gender, course, year_graduate, address, password,
+            verification_token, privacy_policy_accepted, mobileNumber,
+            civilStatus, birthday, role
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `;
+
+        db.query(
+          insertQuery,
+          [
+            firstName,
+            middleName,
+            lastName,
+            email,
+            alumniCardNumber,
+            gender,
+            course,
+            yearGraduate,
+            address,
+            hashedPassword,
+            verificationToken,
+            privacyPolicyAccepted,
+            mobileNumber,
+            civilStatus,
+            birthday,
+            userRole,
+          ],
+          (insertErr) => {
+            if (insertErr) {
+              console.error("Error inserting user:", insertErr);
+
+              // ✅ Specific duplicate entry error handler
+              if (insertErr.code === "ER_DUP_ENTRY") {
+                return res.status(400).json({
+                  message:
+                    "Duplicate entry detected. This email or Alumni Card Number is already registered.",
+                });
+              }
+
+              return res.status(500).json({
+                message: "Invalid input! Please check the form and try again.",
+              });
+            }
+
+            // ✅ Send verification email
+            sendVerificationEmail(email, verificationToken);
+            res.json({
+              message: "Registration successful. Please verify your email.",
+            });
+          }
+        );
       });
-    }
-
-    // Hash password
-    const hashedPassword = await bcrypt.hash(password, 10);
-
-    // Generate verification token
-    const verificationToken = crypto.randomBytes(32).toString("hex");
-
-    const userRole = role === "admin" ? "admin" : "alumni";
-
-    // Insert user
-    await db.execute(
-      `INSERT INTO alumni (
-        first_name, middle_name, last_name, email, alumni_card_number,
-        gender, course, year_graduate, address, password,
-        verification_token, privacy_policy_accepted, mobileNumber,
-        civilStatus, birthday, role
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [
-        firstName, middleName, lastName, email, alumniCardNumber,
-        gender, course, yearGraduate, address, hashedPassword,
-        verificationToken, privacyPolicyAccepted, mobileNumber,
-        civilStatus, birthday, userRole
-      ]
-    );
-
-    // Send verification email
-    sendVerificationEmail(email, verificationToken);
-
-    return res.json({ message: "Registration successful. Please verify your email." });
-
-  } catch (err) {
-    console.error("Server error:", err);
-
-    // Handle MySQL duplicate entry error
-    if (err.code === "ER_DUP_ENTRY") {
-      return res.status(400).json({ message: "Duplicate entry detected. Email or Alumni Card Number already registered." });
-    }
-
-    return res.status(500).json({ message: "Server error" });
+    });
+  } catch (error) {
+    console.error("Server error:", error);
+    res.status(500).json({ message: "Server error" });
   }
 });
+
+
+
 // ✅ Verify Email API
 app.get("/api/verify-email", (req, res) => {
   const { token } = req.query; // Get token from query parameters
