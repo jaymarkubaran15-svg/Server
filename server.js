@@ -103,8 +103,6 @@ app.get("/api/users", (req, res) => {
 });
 
 
-
-
 app.get("/api/users/:id", (req, res) => {
   const userId = req.params.id;
 
