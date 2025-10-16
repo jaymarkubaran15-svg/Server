@@ -19,7 +19,7 @@ app.use(express.urlencoded({ limit: "50mb", extended: true }));
 app.use(express.json());
 app.use(
   cors({
-    origin: "http://localhost:3000", // Allow requests only from your frontend
+    origin: "https://stii-memotrace.onrender.com", // Allow requests only from your frontend
     credentials: true, 
   })
 );
@@ -27,11 +27,12 @@ app.use("/uploads", express.static("uploads"));
 
 // Setup MySQL Connection
 const db = mysql.createConnection({
-  host: "localhost",
-  user: "root",
-  password: "",
-  database: "memotrace",
-    charset: "utf8mb4"
+   host: process.env.DB_HOST,
+  port: process.env.DB_PORT,
+  user: process.env.DB_USER,
+  password: process.env.DB_PASS,
+  database: process.env.DB_NAME,
+  ssl: { ca: process.env.DB_CA },
 });
 
 db.connect((err) => {
@@ -781,7 +782,7 @@ app.get("/api/verify-email", (req, res) => {
     });
 
     // ✅ Redirect to login page after verification
-    res.redirect("http://localhost:3000/login"); 
+    res.redirect("https://stii-memotrace.onrender.com/login"); 
     // 🔹 Change to your frontend login URL when deployed
   });
 });
@@ -801,7 +802,7 @@ function sendVerificationEmail(email, token) {
       from:  `"MemoTrace" <${process.env.SMTP_USER}>`,
       to: email,
       subject: "Verify Your Email",
-      text: `Click the link to verify your Memotrace email account: http://localhost:5000/api/verify-email?token=${token}`,
+      text: `Click the link to verify your Memotrace email account: https://stii-memotrace.onrender.com/api/verify-email?token=${token}`,
   };
 
   transporter.sendMail(mail, (error, info) => {
@@ -2996,7 +2997,7 @@ app.post("/api/sendemployerinvite", (req, res) => {
                   [now, alumniId]
                 );
 
-                const link = `http://localhost:3000/Efeedback?token=${token}`;
+                const link = `https://stii-memotrace.onrender.com/Efeedback?token=${token}`;
                 const alumniName = req.session.user.full_name || "One of our alumni";
 
                 if (sendAutomatically) {
@@ -3120,4 +3121,5 @@ app.get("/api/employer-invite-count", (req, res) => {
 });
 
 // Start Server
-app.listen(5000, () => console.log("Server running on port 5000"));
+const PORT = process.env.PORT || 5000;  // 5000 for local dev
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
