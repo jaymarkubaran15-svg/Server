@@ -1,6 +1,6 @@
 const express = require("express");
 const multer = require("multer");
-const mysql = require("mysql2");
+const mysql = require("mysql2/promise");
 const path = require("path");
 const fs = require("fs");
 const cors = require("cors");
@@ -36,8 +36,8 @@ const db = mysql.createConnection({
 });
 
 db.connect((err) => {
-  if (err) throw err;
-  console.log("Connected!");
+  if (err) console.error("MySQL connection failed:", err);
+  else console.log("Connected to MySQL");
 });
 
 app.get("/", (req, res) => {
