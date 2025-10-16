@@ -40,6 +40,10 @@ db.connect((err) => {
   else console.log("Connected to MySQL");
 });
 
+app.get("/", (req, res) => {
+  res.send("Backend is running! Use /api/alumni to fetch data.");
+});
+
 
 //CHECKING FOR ERROR IN EVENT POSTING
 // app.post("/events", (req, res) => {
