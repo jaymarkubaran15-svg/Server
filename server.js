@@ -66,7 +66,7 @@ app.use(
     cookie: {
       secure: false, // set true if HTTPS
       httpOnly: true,
-      sameSite: 'lax',
+      sameSite: 'none',
       maxAge: 1000 * 60 * 60 * 24, // 1 day
     },
   })
