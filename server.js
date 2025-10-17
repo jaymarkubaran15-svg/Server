@@ -1798,7 +1798,7 @@ app.use("/uploads", express.static("uploads"));
 // Upload Yearbook Folder with Multiple Files and Student Names from Excel
 app.post("/upload-yearbook", upload.single("studentNames"), (req, res) => {
   const { folderName, yearbookName } = req.body;
- const imageUrls = req.body.imageUrls || req.body["imageUrls[]"];
+ const imageUrls = req.body["imageUrls[]"];
 
   if (!folderName || !imageUrls) {
     return res.status(400).json({ message: "Missing folder or image URLs" });
@@ -1819,6 +1819,7 @@ app.post("/upload-yearbook", upload.single("studentNames"), (req, res) => {
 
     // Process Excel (studentNames)
     if (req.file) {
+      const buffer = req.file.buffer; 
       const workbook = xlsx.readFile(req.file.path);
       const sheet = workbook.Sheets[workbook.SheetNames[0]];
       const sheetData = xlsx.utils.sheet_to_json(sheet);
@@ -1866,27 +1867,33 @@ app.get("/yearbooks/count", (req, res) => {
 // 🟢 Get Images for a Specific Yearbook
 app.get("/yearbook/:id/images", (req, res) => {
   const query = "SELECT file_path FROM images WHERE yearbook_id = ?";
+  
   db.query(query, [req.params.id], (err, results) => {
     if (err) {
       console.error("❌ Error fetching images:", err);
       return res.status(500).json({ error: "Database error while fetching images" });
     }
 
-    // Normalize image URLs — handles both Cloudinary and local images
     const images = results.map((img) => {
-      const filePath = img.file_path?.replace(/\\/g, "/"); // normalize backslashes
+      if (!img.file_path) return img;
+
+      const filePath = img.file_path.replace(/\\/g, "/"); // normalize backslashes
+
+      // 🟢 If it's a Cloudinary URL, return as is
+      if (filePath.startsWith("http") && filePath.includes("cloudinary.com")) {
+        return { ...img, file_path: filePath };
+      }
+
+      // 🟡 Otherwise, assume it's a local file
       return {
         ...img,
-        file_path: filePath.startsWith("http")
-          ? filePath
-          : `https://server-1-gjvd.onrender.com/${filePath}`,
+        file_path: `https://server-1-gjvd.onrender.com/${filePath}`,
       };
     });
 
     res.json(images);
   });
 });
-
 
 
 // Delete yearbook by ID
