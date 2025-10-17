@@ -11,6 +11,8 @@ const app = express();
 const session = require('express-session');
 const MySQLStore = require('express-mysql-session')(session);
 const mailgun = require("mailgun-js");
+const { v2: cloudinary } = require("cloudinary");
+const { CloudinaryStorage } = require("multer-storage-cloudinary");
 
 
 // Allow larger JSON and URL-encoded bodies (for base64 images)
@@ -47,6 +49,11 @@ app.get("/", (req, res) => {
   res.send("backend is running! Use /api/alumni to fetch data.");
 });
 
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
 
 //CHECKING FOR ERROR IN EVENT POSTING
 // app.post("/events", (req, res) => {
@@ -1743,17 +1750,18 @@ app.put("/api/events/:id", (req, res) => {
 });
 
 // Multer Storage (Save files inside `/uploads`)
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
+const storage = new CloudinaryStorage({
+  cloudinary: cloudinary,
+  params: async (req, file) => {
     const folderName = req.body.folderName || "default";
-    const uploadPath = `uploads/${folderName}`;
-    fs.mkdirSync(uploadPath, { recursive: true });
-    cb(null, uploadPath);
-  },
-  filename: (req, file, cb) => {
-    cb(null, file.originalname);
+    return {
+      folder: `yearbooks/${folderName}`,
+      public_id: file.originalname.split(".")[0],
+      resource_type: "auto", // allows images, pdfs, etc.
+    };
   },
 });
+
 
 const upload = multer({ storage });
 
