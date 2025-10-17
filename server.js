@@ -1832,13 +1832,15 @@ app.get("/yearbook/:id/images", (req, res) => {
   const query = "SELECT file_path FROM images WHERE yearbook_id = ?";
   db.query(query, [req.params.id], (err, results) => {
     if (err) return res.status(500).json({ error: err });
+
     const images = results.map((img) => ({
-      ...img,
-      file_path: `https://server-1-gjvd.onrender.com/${img.file_path}`,
+      file_path: `https://server-1-gjvd.onrender.com/${img.file_path.replace(/\\/g, "/")}`,
     }));
+
     res.json(images);
   });
 });
+
 
 
 // Delete yearbook by ID
