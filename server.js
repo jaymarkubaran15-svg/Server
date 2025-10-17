@@ -60,11 +60,11 @@ app.use(
   session({
     key: 'memotrace_session',
     secret: process.env.SESSION_SECRET,
-    store: sessionStore, // ✅ store sessions in MySQL
+    store: sessionStore,
     resave: false,
     saveUninitialized: false,
     cookie: {
-      secure: true, // set true if HTTPS
+      secure: true, 
       httpOnly: true,
       sameSite: 'none',
       maxAge: 1000 * 60 * 60 * 24, // 1 day
