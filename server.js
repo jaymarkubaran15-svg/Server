@@ -1842,11 +1842,15 @@ app.get("/yearbook/:id/images", (req, res) => {
     if (err) return res.status(500).json({ error: err });
     const images = results.map((img) => ({
       ...img,
-      file_path: `https://server-1-gjvd.onrender.com/${img.file_path}`,
+      file_path: img.file_path.startsWith("http")
+        ? img.file_path
+        : `https://server-1-gjvd.onrender.com/${img.file_path}`,
     }));
     res.json(images);
   });
 });
+
+
 
 
 // Delete yearbook by ID
