@@ -1835,40 +1835,55 @@ app.post("/upload-yearbook", upload.single("studentNames"), (req, res) => {
   });
 });
 
-
-// Get All Yearbooks
+// 🟢 Get All Yearbooks
 app.get("/yearbooks", (req, res) => {
   const query = "SELECT * FROM yearbooks ORDER BY date_uploaded DESC";
   db.query(query, (err, results) => {
-    if (err) return res.status(500).json({ error: err });
+    if (err) {
+      console.error("❌ Error fetching yearbooks:", err);
+      return res.status(500).json({ error: "Database error while fetching yearbooks" });
+    }
     res.json(results);
   });
 });
 
+
+// 🟢 Get Yearbook Count
 app.get("/yearbooks/count", (req, res) => {
   const query = "SELECT COUNT(*) AS count FROM yearbooks";
   db.query(query, (err, results) => {
-    if (err) return res.status(500).json({ error: err });
+    if (err) {
+      console.error("❌ Error counting yearbooks:", err);
+      return res.status(500).json({ error: "Database error while counting yearbooks" });
+    }
     res.json(results[0]);
   });
 });
 
 
-// Get Images for a Specific Yearbook
+// 🟢 Get Images for a Specific Yearbook
 app.get("/yearbook/:id/images", (req, res) => {
   const query = "SELECT file_path FROM images WHERE yearbook_id = ?";
   db.query(query, [req.params.id], (err, results) => {
-    if (err) return res.status(500).json({ error: err });
-    const images = results.map((img) => ({
-      ...img,
-      file_path: img.file_path.startsWith("http")
-        ? img.file_path
-        : `https://server-1-gjvd.onrender.com/${img.file_path}`,
-    }));
+    if (err) {
+      console.error("❌ Error fetching images:", err);
+      return res.status(500).json({ error: "Database error while fetching images" });
+    }
+
+    // Normalize image URLs — handles both Cloudinary and local images
+    const images = results.map((img) => {
+      const filePath = img.file_path?.replace(/\\/g, "/"); // normalize backslashes
+      return {
+        ...img,
+        file_path: filePath.startsWith("http")
+          ? filePath
+          : `https://server-1-gjvd.onrender.com/${filePath}`,
+      };
+    });
+
     res.json(images);
   });
 });
-
 
 
 
