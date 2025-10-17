@@ -1749,6 +1749,22 @@ app.put("/api/events/:id", (req, res) => {
   });
 });
 
+app.get("/cloudinary-signature", (req, res) => {
+  const timestamp = Math.round(new Date().getTime() / 1000);
+  const paramsToSign = {
+    timestamp,
+    folder: `yearbooks/${req.query.folder || "default"}`
+  };
+  const signature = cloudinary.utils.api_sign_request(paramsToSign, process.env.API_SECRET);
+
+  res.json({
+    timestamp,
+    signature,
+    apiKey: process.env.CLOUDINARY_API_KEY,
+    cloudName: process.env.CLOUDINARY_CLOUD_NAME,
+  });
+});
+
 // Multer Storage (Save files inside `/uploads`)
 const storage = new CloudinaryStorage({
   cloudinary: cloudinary,
@@ -1767,52 +1783,44 @@ const upload = multer({ storage });
 
 app.use("/uploads", express.static("uploads"));
 // Upload Yearbook Folder with Multiple Files and Student Names from Excel
-app.post("/upload-yearbook", upload.fields([{ name: "images", maxCount: 100 }, { name: "studentNames", maxCount: 1 }]), (req, res) => {
+app.post("/upload-yearbook", upload.single("studentNames"), (req, res) => {
   const { folderName, yearbookName } = req.body;
+  const imageUrls = req.body["imageUrls[]"]; // array of URLs from Cloudinary
 
-  if (!folderName || !req.files["images"]) {
-    return res.status(400).json({ message: "Folder and images are required" });
+  if (!folderName || !imageUrls) {
+    return res.status(400).json({ message: "Missing folder or image URLs" });
   }
 
-  // Insert yearbook info
   const insertYearbookQuery = "INSERT INTO yearbooks (folder_name, yearbook_name) VALUES (?, ?)";
   db.query(insertYearbookQuery, [folderName, yearbookName], (err, result) => {
     if (err) return res.status(500).json({ error: "Database error" });
 
     const yearbookId = result.insertId;
+    const images = Array.isArray(imageUrls) ? imageUrls : [imageUrls];
+    const imageValues = images.map((url) => [yearbookId, path.basename(url), url]);
 
-    // Insert images
-    const imageValues = req.files["images"].map((file) => [yearbookId, file.originalname, file.path]);
     const insertImagesQuery = "INSERT INTO images (yearbook_id, file_name, file_path) VALUES ?";
     db.query(insertImagesQuery, [imageValues], (err) => {
-      if (err) return res.status(500).json({ error: "Error saving images" });
+      if (err) return res.status(500).json({ error: "Error saving image URLs" });
     });
 
-    // Process and insert student names if present
-    if (req.files["studentNames"]) {
-      const studentFile = req.files["studentNames"][0].path;
-      const workbook = xlsx.readFile(studentFile);
-      const sheetName = workbook.SheetNames[0];
-      const sheetData = xlsx.utils.sheet_to_json(workbook.Sheets[sheetName]);
+    // Process Excel (studentNames)
+    if (req.file) {
+      const workbook = xlsx.readFile(req.file.path);
+      const sheet = workbook.Sheets[workbook.SheetNames[0]];
+      const sheetData = xlsx.utils.sheet_to_json(sheet);
+      const studentValues = sheetData.map((r) => [yearbookId, r["First Name"], r["Last Name"]]);
 
-      const studentValues = sheetData.map((row) => [yearbookId, row["First Name"], row["Last Name"]]);
-      const insertStudentsQuery = "INSERT INTO students (yearbook_id, first_name, last_name) VALUES ?";
-      db.query(insertStudentsQuery, [studentValues], (err) => {
-        if (err) return res.status(500).json({ error: "Error saving student names" });
+      db.query("INSERT INTO students (yearbook_id, first_name, last_name) VALUES ?", [studentValues], (err) => {
+        if (err) console.error("Error saving students:", err);
       });
     }
 
-    // 🔔 Create a notification
-    const message = `A new yearbook "${yearbookName}" was uploaded.`;
-    const notifSql = `INSERT INTO notifications (type, message, related_id, created_at) VALUES (?, ?, ?, NOW())`;
-    db.query(notifSql, ["yearbook", message, yearbookId], (notifErr) => {
-      if (notifErr) {
-        console.error("❌ Error creating yearbook notification:", notifErr.sqlMessage || notifErr);
-        // Don't block the response
-      }
-
-      res.json({ message: "Yearbook uploaded successfully!" });
-    });
+    db.query(
+      "INSERT INTO notifications (type, message, related_id, created_at) VALUES (?, ?, ?, NOW())",
+      ["yearbook", `A new yearbook "${yearbookName}" was uploaded.`, yearbookId],
+      () => res.json({ message: "Yearbook uploaded successfully!" })
+    );
   });
 });
 
