@@ -1766,7 +1766,7 @@ app.get("/cloudinary-signature", (req, res) => {
     timestamp,
     folder: `yearbooks/${req.query.folder || "default"}`
   };
-  const signature = cloudinary.utils.api_sign_request(paramsToSign, process.env.API_SECRET);
+  const signature = cloudinary.utils.api_sign_request(paramsToSign, process.env.CLOUDINARY_API_SECRET);
 
   res.json({
     timestamp,
@@ -1774,6 +1774,7 @@ app.get("/cloudinary-signature", (req, res) => {
     apiKey: process.env.CLOUDINARY_API_KEY,
     cloudName: process.env.CLOUDINARY_CLOUD_NAME,
   });
+  console.log("✅ Uploaded:", uploadResult.secure_url);
 });
 
 // Multer Storage (Save files inside `/uploads`)
@@ -1793,10 +1794,11 @@ const storage = new CloudinaryStorage({
 const upload = multer({ storage });
 
 app.use("/uploads", express.static("uploads"));
+
 // Upload Yearbook Folder with Multiple Files and Student Names from Excel
 app.post("/upload-yearbook", upload.single("studentNames"), (req, res) => {
   const { folderName, yearbookName } = req.body;
-  const imageUrls = req.body["imageUrls[]"]; // array of URLs from Cloudinary
+ const imageUrls = req.body.imageUrls || req.body["imageUrls[]"];
 
   if (!folderName || !imageUrls) {
     return res.status(400).json({ message: "Missing folder or image URLs" });
