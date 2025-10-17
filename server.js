@@ -55,6 +55,23 @@ const sessionStore = new MySQLStore({
   ssl: { ca: process.env.DB_SSL_CA },
 });
 
+// 🔹 Express-session setup
+app.use(
+  session({
+    key: 'memotrace_session',
+    secret: process.env.SESSION_SECRET,
+    store: sessionStore, // ✅ store sessions in MySQL
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+      secure: false, // set true if HTTPS
+      httpOnly: true,
+      sameSite: 'lax',
+      maxAge: 1000 * 60 * 60 * 24, // 1 day
+    },
+  })
+);
+
 app.get("/", (req, res) => {
   res.send("backend is running! Use /api/alumni to fetch data.");
 });
@@ -839,22 +856,7 @@ function sendVerificationEmail(email, token) {
 } 
 
 
-// 🔹 Express-session setup
-app.use(
-  session({
-    key: 'memotrace_session',
-    secret: process.env.SESSION_SECRET,
-    store: sessionStore, // ✅ store sessions in MySQL
-    resave: false,
-    saveUninitialized: false,
-    cookie: {
-      secure: false, // set true if HTTPS
-      httpOnly: true,
-      sameSite: 'lax',
-      maxAge: 1000 * 60 * 60 * 24, // 1 day
-    },
-  })
-);
+
 
 app.post("/api/login", (req, res) => {
   const { email, password } = req.body;
@@ -941,6 +943,7 @@ app.get("/api/user", (req, res) => {
   if (!req.session.user) return res.status(401).json({ error: "Not logged in" });
   res.json(req.session.user);
 });
+
 // get the user data
 app.get("/api/profile", (req, res) => {
   if (!req.session.user || !req.session.user.id) {
