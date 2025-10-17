@@ -26,7 +26,7 @@ app.use(
     credentials: true, 
   })
 );
-app.use("/uploads", express.static("uploads"));
+
 
 // Setup MySQL Connection
 const db = mysql.createConnection({
@@ -1757,7 +1757,7 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage });
 
-
+app.use("/uploads", express.static("uploads"));
 // Upload Yearbook Folder with Multiple Files and Student Names from Excel
 app.post("/upload-yearbook", upload.fields([{ name: "images", maxCount: 100 }, { name: "studentNames", maxCount: 1 }]), (req, res) => {
   const { folderName, yearbookName } = req.body;
@@ -1810,11 +1810,15 @@ app.post("/upload-yearbook", upload.fields([{ name: "images", maxCount: 100 }, {
 
 
 // Get All Yearbooks
-app.get("/yearbooks", (req, res) => {
-  const query = "SELECT * FROM yearbooks ORDER BY date_uploaded DESC";
-  db.query(query, (err, results) => {
+app.get("/yearbook/:id/images", (req, res) => {
+  const query = "SELECT file_path FROM images WHERE yearbook_id = ?";
+  db.query(query, [req.params.id], (err, results) => {
     if (err) return res.status(500).json({ error: err });
-    res.json(results);
+    const images = results.map((img) => ({
+      ...img,
+      file_path: `https://server-1-gjvd.onrender.com/${img.file_path}`,
+    }));
+    res.json(images);
   });
 });
 
