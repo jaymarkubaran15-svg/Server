@@ -26,8 +26,6 @@ app.use(
 // Allow larger JSON and URL-encoded bodies (for base64 images)
 app.use(express.json({ limit: "50mb" }));
 app.use(express.urlencoded({ limit: "50mb", extended: true }));
-app.use
-
 
 
 // Setup MySQL Connection

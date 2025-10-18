@@ -1,0 +1,31 @@
+{
+  "files": {
+    "main.css": "/static/css/main.98f69bb0.css",
+    "main.js": "/static/js/main.283cf5df.js",
+    "static/js/239.eab0352a.chunk.js": "/static/js/239.eab0352a.chunk.js",
+    "static/js/977.3becd578.chunk.js": "/static/js/977.3becd578.chunk.js",
+    "static/js/455.b4515fdd.chunk.js": "/static/js/455.b4515fdd.chunk.js",
+    "static/js/453.258b012d.chunk.js": "/static/js/453.258b012d.chunk.js",
+    "static/media/shylha.jpg": "/static/media/shylha.882a24979c2d941a9efc.jpg",
+    "static/media/bg.png": "/static/media/bg.da11eb189654d27a11c3.png",
+    "static/media/undraw.png": "/static/media/undraw.b720aada783780f1ff3f.png",
+    "static/media/rhodian.jpg": "/static/media/rhodian.50691339fbd146485f88.jpg",
+    "static/media/waga.png": "/static/media/waga.00f4f37bfd63382fd77e.png",
+    "static/media/Corben-Bold.ttf": "/static/media/Corben-Bold.74f7b27068d5d65636cb.ttf",
+    "static/media/bahog.png": "/static/media/bahog.472fa7317dd5ad36b1c0.png",
+    "static/media/jaymark.jpg": "/static/media/jaymark.00c19db0af2a0f87ee2f.jpg",
+    "static/media/bgadadsasd.jpg": "/static/media/bgadadsasd.eb221417164faede8708.jpg",
+    "static/media/merin.jpg": "/static/media/merin.c4d8dc89df9cde5fd28c.jpg",
+    "static/media/signup.svg": "/static/media/signup.36e0bb61a22db98a5c8a294c3f5a4ec2.svg",
+    "index.html": "/index.html",
+    "main.98f69bb0.css.map": "/static/css/main.98f69bb0.css.map",
+    "main.283cf5df.js.map": "/static/js/main.283cf5df.js.map",
+    "239.eab0352a.chunk.js.map": "/static/js/239.eab0352a.chunk.js.map",
+    "455.b4515fdd.chunk.js.map": "/static/js/455.b4515fdd.chunk.js.map",
+    "453.258b012d.chunk.js.map": "/static/js/453.258b012d.chunk.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.98f69bb0.css",
+    "static/js/main.283cf5df.js"
+  ]
+}
