@@ -917,14 +917,14 @@ app.post("/api/login", (req, res) => {
   });
 });
 
+
 app.get("/api/session", (req, res) => {
-  if (req.session.user) {
+  if (req.session && req.session.user) {
     res.json({ user: req.session.user });
   } else {
     res.status(401).json({ message: "No active session" });
   }
-}); 
-
+});
 
 
 app.get("/user", (req, res) => {
