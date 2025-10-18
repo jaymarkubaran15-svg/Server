@@ -902,11 +902,18 @@ app.post("/api/login", (req, res) => {
       isGTSsurvey: user.isGTSsurvey,
     };
 
+    
+    req.session.save((err) => {
+  if (err) {
+    console.error("Session save error:", err);
+    return res.status(500).json({ message: "Session error" });
+  }
     res.json({
       message: "Login successful",
       is_verified: user.is_verified,
       user: req.session.user,
     });
+  });
   });
 });
 
