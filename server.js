@@ -26,6 +26,7 @@ app.use(
 // Allow larger JSON and URL-encoded bodies (for base64 images)
 app.use(express.json({ limit: "50mb" }));
 app.use(express.urlencoded({ limit: "50mb", extended: true }));
+app.use
 
 
 
@@ -3206,6 +3207,13 @@ app.get("/api/employer-invite-count", (req, res) => {
   }
 });
 
+// Serve static files from the React app's build folder
+app.use(express.static(path.join(__dirname, "build")));
+
+// Handle all remaining routes by returning index.html
+app.get("*", (req, res) => {
+  res.sendFile(path.join(__dirname, "build", "index.html"));
+});
 // Start Server
 const PORT = process.env.PORT || 5000;  // 5000 for local dev
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
