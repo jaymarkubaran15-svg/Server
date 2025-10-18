@@ -520,8 +520,8 @@ function sendFailedAttemptAlert(email) {
   const transporter = nodemailer.createTransport({
     service: "gmail",
     auth: {
-      user: "jaymarkobaran18@gmail.com",
-      pass: "dzwvjlwmkjmmkqed", // use environment variable in production
+      user: process.env.SMTP_USER,
+      pass: process.env.SMTP_PASS, // use environment variable in production
     },
   });
 
@@ -545,8 +545,8 @@ function sendPasswordResetCode(email, code, res) {
   const transporter = nodemailer.createTransport({
     service: "gmail",
     auth: {
-      user: "jaymarkobaran18@gmail.com",
-      pass: "dzwvjlwmkjmmkqed", // Consider using environment variables instead of hardcoding
+      user: process.env.SMTP_USER,
+      pass: process.env.SMTP_PASS,
     },
   });
 
