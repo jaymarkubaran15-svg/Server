@@ -28,8 +28,6 @@ app.use(express.json({ limit: "50mb" }));
 app.use(express.urlencoded({ limit: "50mb", extended: true }));
 
 
-app.use(express.json());
-
 
 // Setup MySQL Connection
 const db = mysql.createConnection({
@@ -57,6 +55,7 @@ const sessionStore = new MySQLStore({
 });
 
 // 🔹 Express-session setup
+app.set("trust proxy", 1);
 app.use(
   session({
     key: 'memotrace_session',
