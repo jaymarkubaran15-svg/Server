@@ -15,6 +15,14 @@ const { v2: cloudinary } = require("cloudinary");
 const { CloudinaryStorage } = require("multer-storage-cloudinary");
 
 
+app.use(
+  cors({
+    origin: "https://memotrace-stii.onrender.com", // Allow requests only from your frontend
+     methods: ['GET','POST','PUT','DELETE','OPTIONS'],
+    credentials: true, 
+  })
+);
+
 // Allow larger JSON and URL-encoded bodies (for base64 images)
 app.use(express.json({ limit: "50mb" }));
 app.use(express.urlencoded({ limit: "50mb", extended: true }));
@@ -65,13 +73,6 @@ app.use(
   })
 );
 
-app.use(
-  cors({
-    origin: "https://memotrace-stii.onrender.com", // Allow requests only from your frontend
-     methods: ['GET','POST','PUT','DELETE','OPTIONS'],
-    credentials: true, 
-  })
-);
 
 
 app.get("/", (req, res) => {
