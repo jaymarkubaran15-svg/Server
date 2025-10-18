@@ -17,7 +17,7 @@ const { CloudinaryStorage } = require("multer-storage-cloudinary");
 
 app.use(
   cors({
-    origin: "https://memotrace-stii.onrender.com", // Allow requests only from your frontend
+    origin: "https://stii-memotrace.onrender.com", // Allow requests only from your frontend
      methods: ['GET','POST','PUT','DELETE','OPTIONS'],
     credentials: true, 
   })
