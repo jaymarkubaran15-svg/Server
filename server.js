@@ -1773,11 +1773,12 @@ app.put("/api/events/:id", (req, res) => {
   });
 });
 
+// ------------------- Cloudinary Signature -------------------
 app.get("/cloudinary-signature", (req, res) => {
   const timestamp = Math.round(new Date().getTime() / 1000);
   const paramsToSign = {
     timestamp,
-    folder: `yearbooks/${req.query.folder || "default"}`
+    folder: `yearbooks/${req.query.folder || "default"}`,
   };
   const signature = cloudinary.utils.api_sign_request(paramsToSign, process.env.CLOUDINARY_API_SECRET);
 
@@ -1787,7 +1788,6 @@ app.get("/cloudinary-signature", (req, res) => {
     apiKey: process.env.CLOUDINARY_API_KEY,
     cloudName: process.env.CLOUDINARY_CLOUD_NAME,
   });
-  console.log("✅ Uploaded:", uploadResult.secure_url);
 });
 
 // Multer Storage (Save files inside `/uploads`)
@@ -1803,13 +1803,11 @@ const storage = new CloudinaryStorage({
   },
 });
 
-
 const upload = multer({ storage });
-
 app.use("/uploads", express.static("uploads"));
 
-// Upload Yearbook Folder with Multiple Files and Student Names from Excel
-app.post("/upload-yearbook", upload.single("studentNames"), (req, res) => {
+// ------------------- Upload Yearbook -------------------
+app.post("/upload-yearbook", async (req, res) => {
   const { folderName, yearbookName } = req.body;
 
   // ❌ imageUrls from req.body
@@ -1837,18 +1835,6 @@ app.post("/upload-yearbook", upload.single("studentNames"), (req, res) => {
       if (err) return res.status(500).json({ error: "Error saving image URLs" });
     });
 
-    // Process student Excel
-    if (req.file) {
-      const workbook = xlsx.readFile(req.file.path);
-      const sheet = workbook.Sheets[workbook.SheetNames[0]];
-      const sheetData = xlsx.utils.sheet_to_json(sheet);
-      const studentValues = sheetData.map((r) => [yearbookId, r["First Name"], r["Last Name"]]);
-
-      db.query("INSERT INTO students (yearbook_id, first_name, last_name) VALUES ?", [studentValues], (err) => {
-        if (err) console.error("Error saving students:", err);
-      });
-    }
-
     // Create notification
     const notifQuery = "INSERT INTO notifications (type, message, related_id, created_at) VALUES (?, ?, ?, NOW())";
     db.query(notifQuery, ["yearbook", `A new yearbook "${yearbookName}" was uploaded.`, yearbookId]);
@@ -1857,7 +1843,7 @@ app.post("/upload-yearbook", upload.single("studentNames"), (req, res) => {
   });
 });
 
-// 🟢 Get All Yearbooks
+// ------------------- Get All Yearbooks -------------------
 app.get("/yearbooks", (req, res) => {
   const query = "SELECT * FROM yearbooks ORDER BY date_uploaded DESC";
   db.query(query, (err, results) => {
@@ -1869,8 +1855,7 @@ app.get("/yearbooks", (req, res) => {
   });
 });
 
-
-// 🟢 Get Yearbook Count
+// ------------------- Get Yearbook Count -------------------
 app.get("/yearbooks/count", (req, res) => {
   const query = "SELECT COUNT(*) AS count FROM yearbooks";
   db.query(query, (err, results) => {
@@ -1882,8 +1867,7 @@ app.get("/yearbooks/count", (req, res) => {
   });
 });
 
-
-// 🟢 Get Images for a Specific Yearbook
+// ------------------- Get Images for a Specific Yearbook -------------------
 app.get("/yearbook/:id/images", (req, res) => {
   const query = "SELECT file_path FROM images WHERE yearbook_id = ?";
   
@@ -1914,23 +1898,7 @@ app.get("/yearbook/:id/images", (req, res) => {
   });
 });
 
-
-// Delete yearbook by ID
-app.delete("/yearbook/:id", async (req, res) => {
-  const { id } = req.params;
-
-  try {
-    // Delete from database
-    db.query("DELETE FROM yearbooks WHERE id = ?", [id]);
-
-    res.json({ success: true, message: "Yearbook deleted successfully" });
-  } catch (error) {
-    console.error("Error deleting yearbook:", error);
-    res.status(500).json({ success: false, message: "Failed to delete yearbook" });
-  }
-});
-
-// Delete Yearbook (Cascade Deletes Images)
+// ------------------- Delete Yearbook -------------------
 app.delete("/yearbook/:id", (req, res) => {
   const query = "DELETE FROM yearbooks WHERE id = ?";
   db.query(query, [req.params.id], (err) => {
