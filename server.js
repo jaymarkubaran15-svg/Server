@@ -21,13 +21,6 @@ app.use(express.urlencoded({ limit: "50mb", extended: true }));
 
 
 app.use(express.json());
-app.use(
-  cors({
-    origin: "https://memotrace-stii.onrender.com", // Allow requests only from your frontend
-     methods: ['GET','POST','PUT','DELETE','OPTIONS'],
-    credentials: true, 
-  })
-);
 
 
 // Setup MySQL Connection
@@ -71,6 +64,15 @@ app.use(
     },
   })
 );
+
+app.use(
+  cors({
+    origin: "https://memotrace-stii.onrender.com", // Allow requests only from your frontend
+     methods: ['GET','POST','PUT','DELETE','OPTIONS'],
+    credentials: true, 
+  })
+);
+
 
 app.get("/", (req, res) => {
   res.send("backend is running! Use /api/alumni to fetch data.");
