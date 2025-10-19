@@ -262,24 +262,24 @@ app.get("/api/user/:id", (req, res) => {
 
 
 // Configure Multer
-const profilestorage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    const uploadPath = path.join(__dirname, 'uploads');
-    cb(null, uploadPath);
-  },
-  filename: (req, file, cb) => {
-    const uniqueName = `${Date.now()}-${file.originalname}`;
-    cb(null, uniqueName);
+const profileStorage = new CloudinaryStorage({
+  cloudinary: cloudinary,
+  params: async (req, file) => {
+    const folderName = "profiles"; // or you can use req.body.folderName
+    return {
+      folder: `profiles/${folderName}`,
+      public_id: `${Date.now()}-${file.originalname.split(".")[0]}`, // unique ID
+      resource_type: "auto", // images, PDFs, etc.
+    };
   },
 });
 
-const profileupload = multer({ storage: profilestorage });
+const profileUpload = multer({ storage: profileStorage });
 
-// Update User and Handle Email Change
-app.put("/api/users/:id", profileupload.single("profile"), async (req, res) => {
+app.put("/api/users/:id", profileUpload.single("profile"), async (req, res) => {
   const { id } = req.params;
   const { name, middlename, lastname, email, password } = req.body;
-  const profile = req.file ? `/uploads/${req.file.filename}` : null;
+  const profile = req.file ? req.file.path : null; // Cloudinary URL
 
   if (!name || !lastname || !email) {
     return res.status(400).json({ message: "Name, Lastname, and Email are required" });
@@ -292,7 +292,7 @@ app.put("/api/users/:id", profileupload.single("profile"), async (req, res) => {
 
     const user = results[0];
 
-    // ✅ If email changed → don't save anything yet, just send verification
+    // Email change verification
     if (email !== user.email) {
       if (!password) {
         return res.status(400).json({ message: "Password is required to confirm email change" });
@@ -321,10 +321,10 @@ app.put("/api/users/:id", profileupload.single("profile"), async (req, res) => {
         });
       });
 
-      return; // 🚫 Stop — don't save anything else
+      return; // Stop further updates
     }
 
-    // ✅ If email is the same → now safe to update other fields
+    // Update other fields
     const finalProfile = profile || user.profile;
     const updateQuery = `
       UPDATE alumni
@@ -342,7 +342,6 @@ app.put("/api/users/:id", profileupload.single("profile"), async (req, res) => {
     });
   });
 });
-
 
 
 // Confirm Email Route
