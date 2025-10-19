@@ -12,7 +12,10 @@ const session = require('express-session');
 const MySQLStore = require('express-mysql-session')(session);
 const { v2: cloudinary } = require("cloudinary");
 const { CloudinaryStorage } = require("multer-storage-cloudinary");
+const { Resend } = require ("resend");
 
+
+const resend = new Resend(process.env.BREVO_API_KEY);
 
 app.use(
   cors({
@@ -543,45 +546,21 @@ function sendFailedAttemptAlert(email) {
 }
 
 async function sendPasswordResetCode(email, code, res) {
-  const transporter = nodemailer.createTransport({
-    host: "smtp-relay.brevo.com",  // Brevo SMTP host
-    port: 587,                      // TLS port (STARTTLS)
-    secure: false,                  // false for port 587, true for port 465
-    auth: {
-      user: process.env.BREVO_USER, // your Brevo account email
-      pass: process.env.BREVO_PASS, // your Brevo SMTP key
-    },
-    tls: {
-      rejectUnauthorized: false,    // avoids SSL issues in cloud
-    },
-  });
-
-  const mailOptions = {
-    from: '"Memotrace" <jaymarkubaran15@gmail.com>', // verified sender
-    to: email,
-    subject: "Password Reset Verification Code",
-    text: `
-You have requested to reset your password.
-
-Your verification code is: ${code}
-
-If you did not request this, please ignore this email.
-    `,
-    html: `
-<p>Hello,</p>
-<p>You have requested to reset your password.</p>
-<p>Your verification code is: <b>${code}</b></p>
-<p>If you did not request this, please ignore this email.</p>
-<p>— MemoTrace Team</p>
-    `,
-  };
-
   try {
-    await transporter.sendMail(mailOptions);
-    console.log(`✅ Password reset email sent to: ${email}`);
+    const response = await resend.emails.send({
+      from: "Memotrace <jaymarkubaran15@gmail.com>",
+      to: email,
+      subject: "Password Reset Verification Code",
+      text: `Your verification code is: ${code}`,
+      html: `<p>Your verification code is: <b>${code}</b></p>`
+    });
+
+    console.log("✅ Password reset email sent:", email);
+    console.log("📄 Brevo API response:", response);
+
     res.json({ message: "Password reset code sent. Please check your email." });
-  } catch (err) {
-    console.error("❌ Error sending password reset email:", err);
+  } catch (error) {
+    console.error("❌ Error sending password reset email:", error);
     res.status(500).json({ message: "Failed to send password reset email." });
   }
 }
