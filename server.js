@@ -373,6 +373,11 @@ app.post('/confirm-email', (req, res) => {
 
 // Helper function to send email
 async function sendVerificationCode(email, code, res) {
+  if (!res) {
+    console.error("❌ Response object (res) is undefined");
+    return;
+  }
+
   try {
     const response = await fetch("https://api.brevo.com/v3/smtp/email", {
       method: "POST",
@@ -393,7 +398,14 @@ async function sendVerificationCode(email, code, res) {
       }),
     });
 
-    const data = await response.json();
+    // Safety check: sometimes response.json() fails if fetch fails
+    let data;
+    try {
+      data = await response.json();
+    } catch (jsonError) {
+      console.error("❌ Failed to parse JSON from Brevo response:", jsonError);
+      return res.status(500).json({ message: "Failed to send verification email" });
+    }
 
     if (!response.ok) {
       console.error("❌ Brevo API error (verification email):", data);
@@ -401,11 +413,11 @@ async function sendVerificationCode(email, code, res) {
     }
 
     console.log(`✅ Verification email sent to: ${email}`);
-    res.json({ message: "Verification code sent. Please check your email to get the verification code." });
+    return res.json({ message: "Verification code sent. Please check your email to get the verification code." });
 
   } catch (error) {
     console.error("❌ Error sending verification email:", error);
-    res.status(500).json({ message: "Failed to send verification email" });
+    return res.status(500).json({ message: "Failed to send verification email" });
   }
 }
 
