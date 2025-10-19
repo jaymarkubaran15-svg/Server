@@ -374,10 +374,12 @@ app.post('/confirm-email', (req, res) => {
 // Helper function to send email
 function sendVerificationCode(email, code, res) {
   const transporter = nodemailer.createTransport({
-    service: "gmail",
+     host: "smtp.gmail.com",
+      port: 465,
+      secure: true,
     auth: {
-      user: "jaymarkobaran18@gmail.com",
-      pass: "dzwvjlwmkjmmkqed",
+    user: process.env.SMTP_USER,
+    pass: process.env.SMTP_PASS,
     },
   });
 
@@ -515,11 +517,13 @@ const failedAttempts = {};
 
 // Email alert sender
 function sendFailedAttemptAlert(email) {
-  const transporter = nodemailer.createTransport({
-    service: "gmail",
+   const transporter = nodemailer.createTransport({
+     host: "smtp.gmail.com",
+      port: 465,
+      secure: true,
     auth: {
-      user: process.env.SMTP_USER,
-      pass: process.env.SMTP_PASS, // use environment variable in production
+    user: process.env.SMTP_USER,
+    pass: process.env.SMTP_PASS,
     },
   });
 
@@ -3087,12 +3091,14 @@ app.post("/api/sendemployerinvite", (req, res) => {
 
                 if (sendAutomatically) {
                    const transporter = nodemailer.createTransport({
-      service: "gmail",
-      auth: {
-          user: "jaymarkobaran18@gmail.com",
-          pass: "dzwvjlwmkjmmkqed",
-      },
-  });
+                      host: "smtp.gmail.com",
+                        port: 465,
+                        secure: true,
+                      auth: {
+                      user: process.env.SMTP_USER,
+                      pass: process.env.SMTP_PASS,
+                      },
+                    });
 
 
                   const mailOptions = {
