@@ -858,32 +858,52 @@ app.get("/api/verify-email", (req, res) => {
 
 
 
-function sendVerificationEmail(email, token) {
-  const transporter = nodemailer.createTransport({
-      service: "gmail",
-      auth: {
-          user: "jaymarkobaran18@gmail.com",
-          pass: "dzwvjlwmkjmmkqed",
+// Helper function to send verification email via Brevo API
+async function sendVerificationEmail(email, token, res) {
+  if (!process.env.BREVO_API_KEY || !process.env.SMTP_USER) {
+    console.error("❌ Brevo API key or sender email is missing in environment variables");
+    if (res) return res.status(500).json({ message: "Email service not configured." });
+    return;
+  }
+
+  try {
+    const response = await fetch("https://api.brevo.com/v3/smtp/email", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "api-key": process.env.BREVO_API_KEY,
       },
-  });
+      body: JSON.stringify({
+        sender: { name: "MemoTrace", email: process.env.SMTP_USER }, // verified sender
+        to: [{ email }], // must use `email` key
+        subject: "Verify Your Email",
+        htmlContent: `
+          <p>Click the link below to verify your Memotrace email account:</p>
+          <p><a href="https://stii-memotrace.onrender.com/api/verify-email?token=${token}">
+          Verify Email</a></p>
+          <p>— MemoTrace Team</p>
+        `,
+        textContent: `Click the link to verify your Memotrace email account: https://stii-memotrace.onrender.com/api/verify-email?token=${token}`,
+      }),
+    });
 
-  const mail = {
-      from:  `"MemoTrace" <${process.env.SMTP_USER}>`,
-      to: email,
-      subject: "Verify Your Email",
-      text: `Click the link to verify your Memotrace email account: https://stii-memotrace.onrender.com/api/verify-email?token=${token}`,
-  };
+    const data = await response.json();
 
-  transporter.sendMail(mail, (error, info) => {
-    if (error) {
-        console.error("Email sending error:", error);
-    } else {
-        console.log("Email sent: ", info.response);
+    if (!response.ok) {
+      console.error("❌ Brevo API error:", data);
+      if (res) return res.status(500).json({ message: "Failed to send verification email." });
+      return;
     }
-});
-} 
 
+    console.log(`✅ Verification email sent to: ${email}`);
+    console.log("📄 Brevo API response:", data);
+    if (res) res.json({ message: "Verification email sent. Please check your inbox." });
 
+  } catch (error) {
+    console.error("❌ Error sending verification email:", error);
+    if (res) res.status(500).json({ message: "Failed to send verification email." });
+  }
+}
 
 
 app.post("/api/login", (req, res) => {
@@ -3041,7 +3061,6 @@ app.post("/api/sendemployerinvite", (req, res) => {
       return res.status(400).json({ success: false, message: "Invalid email address" });
     }
 
-    // ✅ Step 1: Check and reset monthly counter if needed
     db.query(
       "SELECT employer_invite_count, invite_last_reset FROM alumni WHERE id = ?",
       [alumniId],
@@ -3055,12 +3074,10 @@ app.post("/api/sendemployerinvite", (req, res) => {
         const thisMonth = `${now.getFullYear()}-${now.getMonth() + 1}`;
         const lastReset = result[0]?.invite_last_reset;
         let currentCount = result[0]?.employer_invite_count || 0;
-
         const lastMonth =
           lastReset &&
           `${new Date(lastReset).getFullYear()}-${new Date(lastReset).getMonth() + 1}`;
 
-        // Reset if new month
         if (lastMonth !== thisMonth) {
           currentCount = 0;
           db.query(
@@ -3069,7 +3086,6 @@ app.post("/api/sendemployerinvite", (req, res) => {
           );
         }
 
-        // ✅ Step 2: Enforce 2-per-month limit
         if (currentCount >= MAX_INVITES_PER_MONTH) {
           return res.json({
             success: false,
@@ -3077,7 +3093,6 @@ app.post("/api/sendemployerinvite", (req, res) => {
           });
         }
 
-        // ✅ Step 3: Check employer existence
         db.query("SELECT id FROM employers WHERE email = ?", [employerEmail], (err2, results) => {
           if (err2) {
             console.error("DB error (employer lookup):", err2);
@@ -3086,7 +3101,7 @@ app.post("/api/sendemployerinvite", (req, res) => {
 
           const employerId = results.length ? results[0].id : null;
 
-          const handleEmployer = (employerId) => {
+          const handleEmployer = async (employerId) => {
             const token = crypto.randomBytes(32).toString("hex");
             const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
 
@@ -3094,13 +3109,12 @@ app.post("/api/sendemployerinvite", (req, res) => {
               `INSERT INTO employer_tokens (alumni_id, employer_id, token, expires_at, used)
                VALUES (?, ?, ?, ?, false)`,
               [alumniId, employerId, token, expiresAt],
-              (err3) => {
+              async (err3) => {
                 if (err3) {
                   console.error("DB error (token insert):", err3);
                   return res.status(500).json({ success: false, message: "Failed to generate link" });
                 }
 
-                // ✅ Step 4: Increment count
                 db.query(
                   `UPDATE alumni 
                    SET employer_invite_count = employer_invite_count + 1,
@@ -3113,40 +3127,51 @@ app.post("/api/sendemployerinvite", (req, res) => {
                 const alumniName = req.session.user.full_name || "One of our alumni";
 
                 if (sendAutomatically) {
-                   const transporter = nodemailer.createTransport({
-                      host: "smtp.gmail.com",
-                        port: 587,
-                        secure: true,
-                      auth: {
-                      user: process.env.SMTP_USER,
-                      pass: process.env.SMTP_PASS,
+                  try {
+                    const brevoResponse = await fetch("https://api.brevo.com/v3/smtp/email", {
+                      method: "POST",
+                      headers: {
+                        "Content-Type": "application/json",
+                        "api-key": process.env.BREVO_API_KEY,
                       },
+                      body: JSON.stringify({
+                        sender: { name: "STII Alumni Office", email: process.env.SMTP_USER },
+                        to: [{ email: employerEmail }],
+                        subject: "Employer Feedback Request",
+                        htmlContent: `
+                          <p>Dear ${employerName},</p>
+                          <p>${alumniName} listed you as their employer. Please complete our short feedback survey.</p>
+                          <p><a href="${link}" target="_blank">Click here to provide feedback</a></p>
+                          <p>This link expires in 7 days.</p>
+                        `,
+                        textContent: `
+Dear ${employerName},
+
+${alumniName} listed you as their employer. Please complete our short feedback survey:
+
+${link}
+
+This link expires in 7 days.
+                        `,
+                      }),
                     });
 
-
-                  const mailOptions = {
-                    from: `"STII Alumni Office" <${process.env.SMTP_USER}>`,
-                    to: employerEmail,
-                    subject: "Employer Feedback Request",
-                    html: `
-                      <p>Dear ${employerName},</p>
-                      <p>${alumniName} listed you as their employer. Please complete our short feedback survey.</p>
-                      <p><a href="${link}" target="_blank">Click here to provide feedback</a></p>
-                      <p>This link expires in 7 days.</p>
-                    `,
-                  };
-
-                  transporter.sendMail(mailOptions, (mailErr) => {
-                    if (mailErr) {
-                      console.error("Mail error:", mailErr);
-                      return res.status(500).json({ success: false, message: "Failed to send email" });
+                    const data = await brevoResponse.json();
+                    if (!brevoResponse.ok) {
+                      console.error("❌ Brevo API error:", data);
+                      return res.status(500).json({ success: false, message: "Failed to send email." });
                     }
 
+                    console.log(`✅ Employer feedback email sent to: ${employerEmail}`);
                     return res.json({
                       success: true,
                       message: `Invitation sent to ${employerEmail}. (${currentCount + 1}/${MAX_INVITES_PER_MONTH} this month)`,
                     });
-                  });
+
+                  } catch (emailErr) {
+                    console.error("❌ Error sending employer feedback email:", emailErr);
+                    return res.status(500).json({ success: false, message: "Failed to send email." });
+                  }
                 } else {
                   return res.json({
                     success: true,
@@ -3158,7 +3183,6 @@ app.post("/api/sendemployerinvite", (req, res) => {
             );
           };
 
-          // Create employer if not existing
           if (!employerId) {
             db.query(
               "INSERT INTO employers (name, email) VALUES (?, ?)",
