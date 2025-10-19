@@ -565,6 +565,7 @@ If you did not request this, please ignore this email.
     });
 
     console.log(`✅ Password reset email sent to: ${email}`);
+    console.log("BREVO_API_KEY:", process.env.BREVO_API_KEY);
     res.json({ message: "Password reset code sent. Please check your email." });
 
   } catch (error) {
