@@ -548,8 +548,8 @@ async function sendPasswordResetCode(email, code, res) {
     port: 587,                      // TLS port (STARTTLS)
     secure: false,                  // false for port 587, true for port 465
     auth: {
-      user: process.env.BREVO_SMTP_USER, // your Brevo account email
-      pass: process.env.BREVO_SMTP_PASS, // your Brevo SMTP key
+      user: process.env.BREVO_USER, // your Brevo account email
+      pass: process.env.BREVO_PASS, // your Brevo SMTP key
     },
     tls: {
       rejectUnauthorized: false,    // avoids SSL issues in cloud
