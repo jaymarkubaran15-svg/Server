@@ -12,8 +12,7 @@ const session = require('express-session');
 const MySQLStore = require('express-mysql-session')(session);
 const { v2: cloudinary } = require("cloudinary");
 const { CloudinaryStorage } = require("multer-storage-cloudinary");
-import fetch from "node-fetch";
-
+const fetch = require("node-fetch");
 
 
 app.use(
