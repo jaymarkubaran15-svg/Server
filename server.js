@@ -10,9 +10,9 @@ const crypto = require("crypto");
 const app = express();
 const session = require('express-session');
 const MySQLStore = require('express-mysql-session')(session);
-const mailgun = require("mailgun-js");
 const { v2: cloudinary } = require("cloudinary");
 const { CloudinaryStorage } = require("multer-storage-cloudinary");
+const { Resend } = require ("resend") ;
 
 
 app.use(
@@ -82,6 +82,11 @@ cloudinary.config({
   api_key: process.env.CLOUDINARY_API_KEY,
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
+
+
+
+const resend = new Resend(process.env.BREVO_API_KEY);
+
 
 //CHECKING FOR ERROR IN EVENT POSTING
 // app.post("/events", (req, res) => {
@@ -543,53 +548,29 @@ function sendFailedAttemptAlert(email) {
   });
 }
 
-function sendPasswordResetCode(email, code, res) {
-  // ✅ Explicit Gmail SMTP configuration (works better on Render)
-  const transporter = nodemailer.createTransport({
-    host: "smtp.gmail.com",
-    port: 465,          // SSL port
-    secure: true,       // true for port 465
-    auth: {
-      user: process.env.SMTP_USER, // your Gmail address
-      pass: process.env.SMTP_PASS, // Gmail App Password
-    },
-    tls: {
-      rejectUnauthorized: false,   // avoid SSL rejection in Render containers
-    },
-  });
 
-  const mailOptions = {
-    from: `"MemoTrace" <${process.env.SMTP_USER}>`,
-    to: email,
-    subject: "Password Reset Verification Code",
-    text: `
+async function sendPasswordResetCode(email, code, res) {
+  try {
+    await resend.emails.send({
+      from: "MemoTrace <jaymarkubaran15@gmail.com>", // verified Brevo sender
+      to: email,
+      subject: "Password Reset Verification Code",
+      text: `
 You have requested to reset your password.
 
 Your verification code is: ${code}
 
 If you did not request this, please ignore this email.
-    `,
-  };
-
-  // ✅ Check SMTP connection before attempting to send
-  transporter.verify((error, success) => {
-    if (error) {
-      console.error("❌ SMTP connection failed:", error);
-      return res.status(500).json({ message: "Failed to connect to email server." });
-    }
-
-    console.log("✅ SMTP server ready:", success);
-
-    transporter.sendMail(mailOptions, (error) => {
-      if (error) {
-        console.error("❌ Error sending password reset email:", error);
-        return res.status(500).json({ message: "Failed to send password reset email." });
-      }
-
-      console.log(`✅ Password reset email sent to: ${email}`);
-      res.json({ message: "Password reset code sent. Please check your email." });
+      `,
     });
-  });
+
+    console.log(`✅ Password reset email sent to: ${email}`);
+    res.json({ message: "Password reset code sent. Please check your email." });
+
+  } catch (error) {
+    console.error("❌ Error sending password reset email:", error);
+    res.status(500).json({ message: "Failed to send password reset email." });
+  }
 }
 
 app.post("/api/send-code", (req, res) => {

@@ -32,6 +32,7 @@
     "path": "^0.12.7",
     "react-csv": "^2.2.2",
     "react-pageflip": "^2.0.3",
+    "resend": "^6.2.0",
     "sweetalert2": "^11.17.2",
     "xlsx": "^0.18.5"
   }
