@@ -12,7 +12,8 @@ const session = require('express-session');
 const MySQLStore = require('express-mysql-session')(session);
 const { v2: cloudinary } = require("cloudinary");
 const { CloudinaryStorage } = require("multer-storage-cloudinary");
-const fetch = require ("node-fetch");
+const fetch = require("node-fetch");
+
 
 app.use(
   cors({
