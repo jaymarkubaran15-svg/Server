@@ -544,27 +544,51 @@ function sendFailedAttemptAlert(email) {
 }
 
 function sendPasswordResetCode(email, code, res) {
+  // ✅ Explicit Gmail SMTP configuration (works better on Render)
   const transporter = nodemailer.createTransport({
-    service: "gmail",
+    host: "smtp.gmail.com",
+    port: 465,          // SSL port
+    secure: true,       // true for port 465
     auth: {
-      user: process.env.SMTP_USER,
-      pass: process.env.SMTP_PASS,
+      user: process.env.SMTP_USER, // your Gmail address
+      pass: process.env.SMTP_PASS, // Gmail App Password
+    },
+    tls: {
+      rejectUnauthorized: false,   // avoid SSL rejection in Render containers
     },
   });
 
   const mailOptions = {
-    from:  `"MemoTrace" <${process.env.SMTP_USER}>`,
+    from: `"MemoTrace" <${process.env.SMTP_USER}>`,
     to: email,
     subject: "Password Reset Verification Code",
-    text: `You have requested to reset your password.\n\nYour verification code is: ${code}\n\nIf you did not request this, please ignore this email.`,
+    text: `
+You have requested to reset your password.
+
+Your verification code is: ${code}
+
+If you did not request this, please ignore this email.
+    `,
   };
 
-  transporter.sendMail(mailOptions, (error) => {
+  // ✅ Check SMTP connection before attempting to send
+  transporter.verify((error, success) => {
     if (error) {
-      console.error("Error sending password reset email:", error);
-      return res.status(500).json({ message: "Failed to send password reset email." });
+      console.error("❌ SMTP connection failed:", error);
+      return res.status(500).json({ message: "Failed to connect to email server." });
     }
-    res.json({ message: "Password reset code sent. Please check your email." });
+
+    console.log("✅ SMTP server ready:", success);
+
+    transporter.sendMail(mailOptions, (error) => {
+      if (error) {
+        console.error("❌ Error sending password reset email:", error);
+        return res.status(500).json({ message: "Failed to send password reset email." });
+      }
+
+      console.log(`✅ Password reset email sent to: ${email}`);
+      res.json({ message: "Password reset code sent. Please check your email." });
+    });
   });
 }
 
