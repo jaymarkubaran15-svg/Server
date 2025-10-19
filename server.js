@@ -546,41 +546,39 @@ function sendFailedAttemptAlert(email) {
 }
 
 // Helper function to send password reset email via Resend API
-async function sendPasswordResetCode(email, code) {
-  try {
-    const response = await resend.emails.send({
-      from: "Memotrace <stiimemotrace@gmail.com>", // verified sender
-      to: email,
-      subject: "Password Reset Verification Code",
-      text: `Your verification code is: ${code}`,
-      html: `<p>You have requested to reset your password.</p>
-             <p>Your verification code is: <b>${code}</b></p>
-             <p>If you did not request this, please ignore this email.</p>
-             <p>— MemoTrace Team</p>`,
-    });
-
+function sendPasswordResetCode(email, code) {
+  return resend.emails.send({
+    from: "Memotrace <stiimemotrace@gmail.com>", // verified sender
+    to: email,
+    subject: "Password Reset Verification Code",
+    text: `Your verification code is: ${code}`,
+    html: `<p>You have requested to reset your password.</p>
+           <p>Your verification code is: <b>${code}</b></p>
+           <p>If you did not request this, please ignore this email.</p>
+           <p>— MemoTrace Team</p>`,
+  })
+  .then(response => {
     console.log(`✅ Password reset email sent to: ${email}`);
     console.log("📄 Resend API response:", response);
-
     return response;
-  } catch (error) {
+  })
+  .catch(error => {
     console.error("❌ Error sending password reset email:", error);
     throw error;
-  }
+  });
 }
+
 
 // POST /api/send-code
 app.post("/api/send-code", (req, res) => {
   const { email } = req.body;
   if (!email) return res.status(400).json({ message: "Email is required" });
 
-  // 1️⃣ Generate verification code
-  const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
-  const expirationTime = new Date(Date.now() + 10 * 60 * 1000); // 10 mins
+  const verificationCode = Math.floor(100000 + Math.random() * 900000).toString(); // 6-digit code
+  const expirationTime = new Date(Date.now() + 10 * 60 * 1000); // expires in 10 mins
 
-  // 2️⃣ Get user ID
   const getUserQuery = "SELECT id FROM alumni WHERE email = ?";
-  db.query(getUserQuery, [email], async (err, results) => {
+  db.query(getUserQuery, [email], (err, results) => {
     if (err) {
       console.error("Database error:", err);
       return res.status(500).json({ message: "Internal server error" });
@@ -592,34 +590,18 @@ app.post("/api/send-code", (req, res) => {
 
     const userId = results[0].id;
 
-    // 3️⃣ Insert verification code into DB
     const insertQuery = `
       INSERT INTO password_resets (user_id, email, code, expires_at)
       VALUES (?, ?, ?, ?)
     `;
-    db.query(insertQuery, [userId, email, verificationCode, expirationTime], async (err) => {
+    db.query(insertQuery, [userId, email, verificationCode, expirationTime], (err) => {
       if (err) {
         console.error("Error inserting code into DB:", err);
         return res.status(500).json({ message: "Failed to store verification code" });
       }
 
-      // 4️⃣ Send email via Resend API
-      try {
-        const apiResponse = await sendPasswordResetCode(email, verificationCode);
-
-        // 5️⃣ Optional: Save API response into DB for tracking
-        const logQuery = `
-          INSERT INTO email_logs (user_id, email, code, message_id, status)
-          VALUES (?, ?, ?, ?, ?)
-        `;
-        db.query(logQuery, [userId, email, verificationCode, apiResponse.id, 'sent'], (err) => {
-          if (err) console.error("Failed to log email:", err);
-        });
-
-        res.json({ message: "Password reset code sent. Please check your email." });
-      } catch (error) {
-        res.status(500).json({ message: "Failed to send password reset email." });
-      }
+      // Use your email function to send the code
+      sendPasswordResetCode(email, verificationCode, res);
     });
   });
 });
