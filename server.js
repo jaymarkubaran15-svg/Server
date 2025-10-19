@@ -372,28 +372,41 @@ app.post('/confirm-email', (req, res) => {
 });
 
 // Helper function to send email
-function sendVerificationCode(email, code, res) {
-  const transporter = nodemailer.createTransport({
-     host: "smtp.gmail.com",
-      port: 587,
-      secure: true,
-    auth: {
-    user: process.env.SMTP_USER,
-    pass: process.env.SMTP_PASS,
-    },
-  });
+async function sendVerificationCode(email, code, res) {
+  try {
+    const response = await fetch("https://api.brevo.com/v3/smtp/email", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "api-key": process.env.BREVO_API_KEY,
+      },
+      body: JSON.stringify({
+        sender: { name: "MemoTrace", email: process.env.SMTP_USER },
+        to: [{ email }],
+        subject: "Confirm your email change",
+        textContent: `Your account email has been successfully changed.`,
+        htmlContent: `
+          <p>Your account email has been successfully changed.</p>
+          <p>Your verification code is: <b>${code}</b></p>
+          <p>If you did not request this change, please contact support immediately.</p>
+        `,
+      }),
+    });
 
-  const mailOption = {
-    from:  `"MemoTrace" <${process.env.SMTP_USER}>`,
-    to: email,
-    subject: 'Confirm your email change',
-    text: `Your account email has been successfully changed`
-  };
+    const data = await response.json();
 
-  transporter.sendMail(mailOption, (error) => {
-    if (error) return res.status(500).json({ message: "Failed to send verification email" });
+    if (!response.ok) {
+      console.error("❌ Brevo API error (verification email):", data);
+      return res.status(500).json({ message: "Failed to send verification email" });
+    }
+
+    console.log(`✅ Verification email sent to: ${email}`);
     res.json({ message: "Verification code sent. Please check your email to get the verification code." });
-  });
+
+  } catch (error) {
+    console.error("❌ Error sending verification email:", error);
+    res.status(500).json({ message: "Failed to send verification email" });
+  }
 }
 
 // Helper function to generate verification code
@@ -515,32 +528,39 @@ app.put("/api/users/:id/change-userpassword", async (req, res) => {
 // In-memory tracking of failed attempts (use database for persistence in production)
 const failedAttempts = {};
 
-// Email alert sender
-function sendFailedAttemptAlert(email) {
-   const transporter = nodemailer.createTransport({
-     host: "smtp.gmail.com",
-      port: 587,
-      secure: true,
-    auth: {
-    user: process.env.SMTP_USER,
-    pass: process.env.SMTP_PASS,
-    },
-  });
+async function sendFailedAttemptAlert(email) {
+  try {
+    const response = await fetch("https://api.brevo.com/v3/smtp/email", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "api-key": process.env.BREVO_API_KEY,
+      },
+      body: JSON.stringify({
+        sender: { name: "MemoTrace", email: process.env.SMTP_USER },
+        to: [{ email }],
+        subject: "Security Alert: Multiple Failed Password Attempts",
+        textContent: `There have been 3 unsuccessful attempts to change your password on your MEMOTRACE account. If this wasn't you, please secure your account immediately.`,
+        htmlContent: `
+          <p>There have been <b>3 unsuccessful attempts</b> to change your password on your MEMOTRACE account.</p>
+          <p>If this wasn't you, please secure your account immediately.</p>
+        `,
+      }),
+    });
 
-  const mail = {
-    from:  `"MemoTrace" <${process.env.SMTP_USER}>`,
-    to: email,
-    subject: "Security Alert: Multiple Failed Password Attempts",
-    text: `There have been 3 unsuccessful attempts to change your password on your MEMOTRACE account. If this wasn't you, please secure your account immediately.`,
-  };
+    const data = await response.json();
 
-  transporter.sendMail(mail, (error, info) => {
-    if (error) {
-      console.error("Email sending error:", error);
-    } else {
-      console.log("Alert email sent:", info.response);
+    if (!response.ok) {
+      console.error("❌ Brevo API error (failed attempt alert):", data);
+      return;
     }
-  });
+
+    console.log(`✅ Security alert email sent to: ${email}`);
+    console.log("📄 Brevo API response:", data);
+
+  } catch (error) {
+    console.error("❌ Error sending security alert email:", error);
+  }
 }
 
 // / Helper function to send password reset email via Brevo API
