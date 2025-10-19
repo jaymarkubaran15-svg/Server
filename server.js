@@ -545,7 +545,7 @@ function sendFailedAttemptAlert(email) {
 
 // / Helper function to send password reset email via Brevo API
 async function sendPasswordResetCode(email, code, res) {
-  if (!process.env.BREVO_API_KEY || !process.env.BREVO_SMTP_USER) {
+  if (!process.env.BREVO_API_KEY || !process.env.SMTP_USER) {
     console.error("❌ Brevo API key or sender email is missing in environment variables");
     return res.status(500).json({ message: "Email service not configured." });
   }
@@ -558,7 +558,7 @@ async function sendPasswordResetCode(email, code, res) {
         "api-key": process.env.BREVO_API_KEY,
       },
       body: JSON.stringify({
-        sender: { name: "MemoTrace", email: process.env.BREVO_SMTP_USER }, // verified sender
+        sender: { name: "MemoTrace", email: process.env.SMTP_USER }, // verified sender
         to: [{ email }], // must use `email` key
         subject: "Password Reset Verification Code",
         htmlContent: `
