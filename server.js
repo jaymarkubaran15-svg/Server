@@ -549,7 +549,7 @@ function sendFailedAttemptAlert(email) {
 async function sendPasswordResetCode(email, code) {
   try {
     const response = await resend.emails.send({
-      from: "Memotrace <jaymarkubaran15@gmail.com>", // verified sender
+      from: "Memotrace <stiimemotrace@gmail.com>", // verified sender
       to: email,
       subject: "Password Reset Verification Code",
       text: `Your verification code is: ${code}`,
