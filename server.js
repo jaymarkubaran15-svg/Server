@@ -552,7 +552,7 @@ function sendFailedAttemptAlert(email) {
 async function sendPasswordResetCode(email, code, res) {
   try {
     await resend.emails.send({
-      from: "MemoTrace <jaymarkubaran15@gmail.com>", // verified Brevo sender
+      from: "Memotrace<jaymarkubaran15@gmail.com>", // verified Brevo sender
       to: email,
       subject: "Password Reset Verification Code",
       text: `
