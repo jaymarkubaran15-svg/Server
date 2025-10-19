@@ -12,7 +12,6 @@ const session = require('express-session');
 const MySQLStore = require('express-mysql-session')(session);
 const { v2: cloudinary } = require("cloudinary");
 const { CloudinaryStorage } = require("multer-storage-cloudinary");
-const { Resend } = require ("resend") ;
 
 
 app.use(
@@ -82,10 +81,6 @@ cloudinary.config({
   api_key: process.env.CLOUDINARY_API_KEY,
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
-
-
-
-const resend = new Resend(process.env.BREVO_API_KEY);
 
 
 //CHECKING FOR ERROR IN EVENT POSTING
@@ -549,26 +544,37 @@ function sendFailedAttemptAlert(email) {
 }
 
 
+
 async function sendPasswordResetCode(email, code, res) {
-  try {
-    await resend.emails.send({
-      from: "Memotrace<jaymarkubaran15@gmail.com>", // verified Brevo sender
-      to: email,
-      subject: "Password Reset Verification Code",
-      text: `
+  const transporter = nodemailer.createTransport({
+    host: "smtp-relay.brevo.com",  // Brevo SMTP host
+    port: 587,                      // TLS port
+    secure: false,                  // true for port 465
+    auth: {
+      user: process.env.BREVO_USER,  // usually your Brevo account email
+      pass: process.env.BREVO_PASS,  // your Brevo SMTP key
+    },
+  });
+
+  const mailOptions = {
+    from: '"Memotrace" <jaymarkubaran15@gmail.com>',
+    to: email,
+    subject: "Password Reset Verification Code",
+    text: `
 You have requested to reset your password.
 
 Your verification code is: ${code}
 
 If you did not request this, please ignore this email.
-      `,
-    });
+    `,
+  };
 
+  try {
+    await transporter.sendMail(mailOptions);
     console.log(`✅ Password reset email sent to: ${email}`);
     res.json({ message: "Password reset code sent. Please check your email." });
-
-  } catch (error) {
-    console.error("❌ Error sending password reset email:", error);
+  } catch (err) {
+    console.error("❌ Error sending password reset email:", err);
     res.status(500).json({ message: "Failed to send password reset email." });
   }
 }
