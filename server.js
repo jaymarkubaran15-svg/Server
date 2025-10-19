@@ -371,13 +371,8 @@ app.post('/confirm-email', (req, res) => {
   });
 });
 
-// Helper function to send email
-async function sendVerificationCode(email, code, res) {
-  if (!res) {
-    console.error("❌ Response object (res) is undefined");
-    return;
-  }
-
+// Helper function to send email// Helper function – no res dependency
+async function sendVerificationCode(email, code) {
   try {
     const response = await fetch("https://api.brevo.com/v3/smtp/email", {
       method: "POST",
@@ -389,7 +384,7 @@ async function sendVerificationCode(email, code, res) {
         sender: { name: "MemoTrace", email: process.env.SMTP_USER },
         to: [{ email }],
         subject: "Confirm your email change",
-        textContent: `Your account email has been successfully changed.`,
+        textContent: `Your verification code is: ${code}`,
         htmlContent: `
           <p>Your account email has been successfully changed.</p>
           <p>Your verification code is: <b>${code}</b></p>
@@ -398,26 +393,18 @@ async function sendVerificationCode(email, code, res) {
       }),
     });
 
-    // Safety check: sometimes response.json() fails if fetch fails
-    let data;
-    try {
-      data = await response.json();
-    } catch (jsonError) {
-      console.error("❌ Failed to parse JSON from Brevo response:", jsonError);
-      return res.status(500).json({ message: "Failed to send verification email" });
-    }
-
     if (!response.ok) {
-      console.error("❌ Brevo API error (verification email):", data);
-      return res.status(500).json({ message: "Failed to send verification email" });
+      const data = await response.json().catch(() => ({}));
+      console.error("❌ Brevo API error:", data);
+      throw new Error("Failed to send verification email");
     }
 
     console.log(`✅ Verification email sent to: ${email}`);
-    return res.json({ message: "Verification code sent. Please check your email to get the verification code." });
+    return true;
 
   } catch (error) {
     console.error("❌ Error sending verification email:", error);
-    return res.status(500).json({ message: "Failed to send verification email" });
+    throw error;
   }
 }
 
