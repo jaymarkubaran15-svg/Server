@@ -542,26 +542,20 @@ function sendFailedAttemptAlert(email) {
   });
 }
 
-// Helper function to send password reset email via Brevo API
 async function sendPasswordResetCode(email, code, res) {
   try {
     const response = await fetch("https://api.brevo.com/v3/smtp/email", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "api-key": process.env.BREVO_API_KEY // your Brevo API key
+        "api-key": process.env.BREVO_API_KEY
       },
       body: JSON.stringify({
-        sender: { name: "MemoTrace", email: process.env.SMTP_USER }, // verified sender
+        sender: { name: "MemoTrace", email: process.env.BREVO_SMTP_USER },
         to: [{ email }],
         subject: "Password Reset Verification Code",
-        htmlContent: `
-          <p>You have requested to reset your password.</p>
-          <p>Your verification code is: <b>${code}</b></p>
-          <p>If you did not request this, please ignore this email.</p>
-          <p>— MemoTrace Team</p>
-        `,
-        textContent: `You have requested to reset your password.\n\nYour verification code is: ${code}\n\nIf you did not request this, please ignore this email.`
+        htmlContent: `<p>Your verification code is: <b>${code}</b></p>`,
+        textContent: `Your verification code is: ${code}`
       })
     });
 
@@ -573,7 +567,6 @@ async function sendPasswordResetCode(email, code, res) {
     }
 
     console.log(`✅ Password reset email sent to: ${email}`);
-    console.log("📄 Brevo API response:", data);
     res.json({ message: "Password reset code sent. Please check your email." });
 
   } catch (error) {
@@ -581,6 +574,7 @@ async function sendPasswordResetCode(email, code, res) {
     res.status(500).json({ message: "Failed to send password reset email." });
   }
 }
+
 
 // POST /api/send-code
 app.post("/api/send-code", (req, res) => {
