@@ -12,7 +12,6 @@ const session = require('express-session');
 const MySQLStore = require('express-mysql-session')(session);
 const { v2: cloudinary } = require("cloudinary");
 const { CloudinaryStorage } = require("multer-storage-cloudinary");
-const { Resend } = require ("resend") ;
 
 
 app.use(
@@ -82,11 +81,6 @@ cloudinary.config({
   api_key: process.env.CLOUDINARY_API_KEY,
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
-
-
-
-const resend = new Resend(process.env.BREVO_API_KEY);
-
 
 //CHECKING FOR ERROR IN EVENT POSTING
 // app.post("/events", (req, res) => {
@@ -548,28 +542,46 @@ function sendFailedAttemptAlert(email) {
   });
 }
 
-
 async function sendPasswordResetCode(email, code, res) {
-  try {
-    await resend.emails.send({
-      from: "Memotrace <jaymarkubaran15@gmail.com>", // verified Brevo sender
-      to: email,
-      subject: "Password Reset Verification Code",
-      text: `
+  const transporter = nodemailer.createTransport({
+    host: "smtp-relay.brevo.com",  // Brevo SMTP host
+    port: 587,                      // TLS port (STARTTLS)
+    secure: false,                  // false for port 587, true for port 465
+    auth: {
+      user: process.env.BREVO_SMTP_USER, // your Brevo account email
+      pass: process.env.BREVO_SMTP_PASS, // your Brevo SMTP key
+    },
+    tls: {
+      rejectUnauthorized: false,    // avoids SSL issues in cloud
+    },
+  });
+
+  const mailOptions = {
+    from: '"Memotrace" <jaymarkubaran15@gmail.com>', // verified sender
+    to: email,
+    subject: "Password Reset Verification Code",
+    text: `
 You have requested to reset your password.
 
 Your verification code is: ${code}
 
 If you did not request this, please ignore this email.
-      `,
-    });
+    `,
+    html: `
+<p>Hello,</p>
+<p>You have requested to reset your password.</p>
+<p>Your verification code is: <b>${code}</b></p>
+<p>If you did not request this, please ignore this email.</p>
+<p>— MemoTrace Team</p>
+    `,
+  };
 
+  try {
+    await transporter.sendMail(mailOptions);
     console.log(`✅ Password reset email sent to: ${email}`);
-    console.log("BREVO_API_KEY:", process.env.BREVO_API_KEY);
     res.json({ message: "Password reset code sent. Please check your email." });
-
-  } catch (error) {
-    console.error("❌ Error sending password reset email:", error);
+  } catch (err) {
+    console.error("❌ Error sending password reset email:", err);
     res.status(500).json({ message: "Failed to send password reset email." });
   }
 }
