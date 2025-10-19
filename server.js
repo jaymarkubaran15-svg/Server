@@ -375,7 +375,7 @@ app.post('/confirm-email', (req, res) => {
 function sendVerificationCode(email, code, res) {
   const transporter = nodemailer.createTransport({
      host: "smtp.gmail.com",
-      port: 465,
+      port: 587,
       secure: true,
     auth: {
     user: process.env.SMTP_USER,
@@ -519,7 +519,7 @@ const failedAttempts = {};
 function sendFailedAttemptAlert(email) {
    const transporter = nodemailer.createTransport({
      host: "smtp.gmail.com",
-      port: 465,
+      port: 587,
       secure: true,
     auth: {
     user: process.env.SMTP_USER,
@@ -3092,7 +3092,7 @@ app.post("/api/sendemployerinvite", (req, res) => {
                 if (sendAutomatically) {
                    const transporter = nodemailer.createTransport({
                       host: "smtp.gmail.com",
-                        port: 465,
+                        port: 587,
                         secure: true,
                       auth: {
                       user: process.env.SMTP_USER,
